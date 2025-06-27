@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+
+  
+}
+
+
+model User {
+  userId       Int          @id @default(autoincrement())
+  email        String       @unique
+  password     String
+  firstName    String
+  lastName     String
+
+  savedHouses  SavedHouse[]
+  inquiries    Inquiry[]      // inquiries created by this user
+  reviews      Review[]       // reviews written by this user
+}
+
+model HouseOwner {
+  ownerId            Int         @id @default(autoincrement())
+  email              String      @unique
+  password           String
+  name               String
+  phoneNumber        String
+  verificationStatus Boolean     @default(false)
+  totalProperties    Int         @default(0)
+
+  houses             House[]
+  inquiriesReceived  Inquiry[]   // inquiries received by this owner
+  reviews            Review[]    // reviews rating this owner
+}
+
+model House {
+  houseId           Int          @id @default(autoincrement())
+  title             String
+  description       String
+  monthlyRent       Float
+  numberOfRooms     Int
+  numberOfBathrooms Int
+  furnishingStatus  String
+  isAvailable       Boolean      @default(true)
+  datePosted        DateTime     @default(now())
+
+  ownerId           Int
+  owner             HouseOwner   @relation(fields: [ownerId], references: [ownerId])
+
+  regionId          Int
+  region            Region      @relation(fields: [regionId], references: [regionId])
+
+  images            HouseImage[]
+  savedBy           SavedHouse[]
+  inquiries         Inquiry[]
+  reviews           Review[]
+}
+
+model HouseImage {
+  imageId    Int     @id @default(autoincrement())
+  imageUrl   String
+
+  houseId    Int
+  house      House   @relation(fields: [houseId], references: [houseId])
+}
+
+model Region {
+  regionId    Int      @id @default(autoincrement())
+  regionName  String
+  area        Float?
+  city        String
+  country     String
+  street      String?
+  postalCode  String?
+  latitude    Float?
+  longitude   Float?
+
+  houses      House[]
+}
+
+model Inquiry {
+  inquiryId       Int       @id @default(autoincrement())
+  message         String
+  dateCreated     DateTime  @default(now())
+  status          String
+  responseMessage String?
+  responseDate    DateTime?
+
+  userId          Int
+  user            User      @relation(fields: [userId], references: [userId])
+
+  houseId         Int
+  house           House     @relation(fields: [houseId], references: [houseId])
+
+  ownerId         Int
+  owner           HouseOwner @relation(fields: [ownerId], references: [ownerId])
+}
+
+model SavedHouse {
+  savedId    Int      @id @default(autoincrement())
+  dateSaved  DateTime @default(now())
+
+  userId     Int
+  user       User     @relation(fields: [userId], references: [userId])
+
+  houseId    Int
+  house      House    @relation(fields: [houseId], references: [houseId])
+}
+
+model Review {
+  reviewId    Int      @id @default(autoincrement())
+  rating      Int
+  comment     String
+  dateCreated DateTime @default(now())
+
+  userId      Int
+  user        User     @relation(fields: [userId], references: [userId])
+
+  houseId     Int
+  house       House    @relation(fields: [houseId], references: [houseId])
+
+  ownerId     Int
+  owner       HouseOwner @relation(fields: [ownerId], references: [ownerId])
+}
+
+
+
