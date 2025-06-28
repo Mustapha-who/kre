@@ -1,11 +1,14 @@
 import React from "react";
+import Link from "next/link";
 
 export default function FrontLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Bar */}
       <nav className="flex items-center justify-between px-8 py-4 bg-white shadow">
-        <div className="text-2xl font-bold">Kre.TN</div>
+        <Link href="/main" className="text-2xl font-bold">
+          Kre.TN
+        </Link>
         <div className="flex-1 mx-8">
           <input
             type="text"
