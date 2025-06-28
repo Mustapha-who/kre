@@ -39,7 +39,7 @@ export function PhotoGallery({
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-3">
         {/* Main Featured Image - Slightly smaller */}
         <div
-          className="md:col-span-3 rounded-lg overflow-hidden h-56 md:h-90 relative cursor-pointer group"
+          className="md:col-span-3 rounded-lg overflow-hidden h-56 md:h-80 relative cursor-pointer group"
           onClick={() => openGallery(0)}
           tabIndex={0}
           aria-label="View all photos"
@@ -56,16 +56,17 @@ export function PhotoGallery({
             </div>
           </div>
         </div>
-        {/* Thumbnails - Vertical on right side (desktop) */}
+        {/* Thumbnails - 2-column grid on right side (desktop) */}
         {thumbnailImages.length > 0 && (
-          <div className="md:col-span-2 flex flex-col gap-3 h-56 md:h-80">
+          <div className="md:col-span-2 grid grid-cols-2 gap-3 h-56 md:h-80">
             {thumbnailImages.map((img, index) => (
               <div
                 key={img.imageId}
-                className="flex-1 rounded-md overflow-hidden cursor-pointer group"
+                className="rounded-md overflow-hidden cursor-pointer group h-full"
                 onClick={() => openGallery(index + 1)}
                 tabIndex={0}
                 aria-label={`View photo ${index + 2}`}
+                style={{ minHeight: 0 }}
               >
                 <img
                   src={img.imageUrl}
