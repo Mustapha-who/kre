@@ -1,26 +1,46 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { getHouses } from "@/services/houseService";
+import { CardTitle, CardDescription} from "@/components/ui/card";
+import { getHouses, searchHouses } from "@/services/houseService";
 import Link from "next/link";
 
-export default async function MainPage() {
-  const houses = await getHouses();
+interface SearchParams {
+  q?: string | string[];
+}
+
+interface MainPageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function MainPage({ 
+  searchParams 
+}: MainPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const q = resolvedSearchParams.q;
+  const searchTerm = q === undefined ? undefined : 
+                   Array.isArray(q) ? q[0] : q;
+  
+  const houses = searchTerm
+    ? await searchHouses(searchTerm)
+    : await getHouses();
 
   return (
     <main className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-      {houses.map((house) => (
-        <Link
-          key={house.houseId}
-          href={`/main/house/${house.houseId}`}
-          className="hover:shadow-md transition-shadow duration-200 hover:translate-y-[-2px] block h-full"
-        >
-          
+      {houses.length === 0 ? (
+        <div className="col-span-full text-center py-10 text-muted-foreground">
+          No houses found for your search criteria
+        </div>
+      ) : (
+        houses.map((house) => (
+          <Link
+            key={house.houseId}
+            href={`/main/house/${house.houseId}`}
+            className="hover:shadow-md transition-shadow duration-200 hover:translate-y-[-2px] block h-full"
+          >
             {/* Image container with no spacing */}
             <div className="w-full overflow-hidden" >
               <img 
                 src={house.images[0]?.imageUrl || '/placeholder-house.jpg'}
                 alt={house.title}
                 className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
-                
               />
             </div>
             {/* Content area */}
@@ -46,8 +66,9 @@ export default async function MainPage() {
                 </li>
               </ul>
             </div>
-        </Link>
-      ))}
+          </Link>
+        ))
+      )}
     </main>
   );
 }
