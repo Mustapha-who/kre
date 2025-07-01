@@ -1,16 +1,24 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useSearchQuery } from "@/components/use-search-query";
 
 export function SearchBar() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const search = useSearchQuery();
+  const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle mounting and search params
+  useEffect(() => {
+    setMounted(true);
+    setInput(search);
+  }, [search]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -27,7 +35,6 @@ export function SearchBar() {
       setIsLoading(false);
       return;
     }
-
     setIsLoading(true);
     try {
       const res = await fetch(`/api/search-suggestions?q=${encodeURIComponent(q.trim())}`);
@@ -48,37 +55,33 @@ export function SearchBar() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearch(value);
+    setInput(value);
     setShowSuggestions(true);
-
-    // Clear existing timeout
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-
-    // Set new timeout for debounced search
+    
     timeoutRef.current = setTimeout(() => {
       fetchSuggestions(value);
-    }, 300); // Increased debounce time slightly
+    }, 300);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
     
-    if (!search.trim()) {
-      // If empty search, redirect to main page without query
+    if (!input.trim()) {
       router.push('/main');
       return;
     }
-
     const params = new URLSearchParams();
-    params.set("q", search.trim());
+    params.set("q", input.trim());
     router.push(`/main?${params.toString()}`);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setSearch(suggestion);
+    setInput(suggestion);
     setShowSuggestions(false);
     router.push(`/main?q=${encodeURIComponent(suggestion)}`);
   };
@@ -91,9 +94,22 @@ export function SearchBar() {
   };
 
   const handleBlur = () => {
-    // Delay hiding suggestions to allow for click events
     setTimeout(() => setShowSuggestions(false), 150);
   };
+
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="flex-1 mx-8">
+        <input
+          type="text"
+          placeholder="Search by city, region, country, or postal code..."
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          disabled
+        />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex-1 mx-8 relative">
@@ -103,23 +119,21 @@ export function SearchBar() {
           type="text"
           placeholder="Search by city, region, country, or postal code..."
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          value={search}
+          value={input}
           onChange={handleChange}
-          onFocus={() => search && setShowSuggestions(true)}
+          onFocus={() => input && setShowSuggestions(true)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoComplete="off"
         />
         
-        {/* Loading indicator */}
         {isLoading && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
           </div>
         )}
       </div>
-
-      {/* Suggestions dropdown */}
+      
       {showSuggestions && suggestions.length > 0 && (
         <ul className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-auto">
           {suggestions.map((suggestion, index) => (
@@ -133,9 +147,8 @@ export function SearchBar() {
           ))}
         </ul>
       )}
-
-      {/* No results message */}
-      {showSuggestions && !isLoading && search.trim() && suggestions.length === 0 && (
+      
+      {showSuggestions && !isLoading && input.trim() && suggestions.length === 0 && (
         <div className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 px-4 py-2 text-gray-500">
           No suggestions found
         </div>
