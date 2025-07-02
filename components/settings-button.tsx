@@ -5,7 +5,7 @@ export function SettingsButton() {
   return (
     <button
       type="button"
-      className="w-full text-left"
+      className="w-full text-left cursor-pointer"
       onClick={() => router.push("/settings")}
     >
       Settings

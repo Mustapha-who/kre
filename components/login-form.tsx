@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { User2, Home } from "lucide-react"
 
 export function LoginForm({
   className,
@@ -22,6 +23,7 @@ export function LoginForm({
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showSignupOptions, setShowSignupOptions] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -40,7 +42,7 @@ export function LoginForm({
         method: "POST",
         body: JSON.stringify({ email, password }),
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // <-- IMPORTANT: allow cookies to be set
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -48,7 +50,6 @@ export function LoginForm({
         throw new Error(data.error || "Login failed");
       }
 
-      // Do NOT check document.cookie for HTTP-only cookies (they are not accessible in JS)
       router.refresh();
       router.push("/main");
 
@@ -93,19 +94,91 @@ export function LoginForm({
                 />
               </div>
               {error && <div className="text-red-600 text-sm">{error}</div>}
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
               </Button>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Link href="/sign-up" className="underline underline-offset-4">
-                  Sign up
-                </Link>
-              </div>
+              <button
+               type="button"
+                 className="underline underline-offset-4 font-semibold 
+                 text-primary hover:text-primary/80 
+                 hover:underline-offset-[3px] 
+                  transition-all duration-200
+                  cursor-pointer"
+                onClick={() => setShowSignupOptions(true)}
+                >
+              Sign up
+              </button>
+            </div>
             </div>
           </form>
         </CardContent>
       </Card>
+      {/* Floating sign-up options as two shadcn cards with icons */}
+      {showSignupOptions && (
+  <div 
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    onClick={() => setShowSignupOptions(false)}  // Add this line
+  >
+    <div 
+      className="flex flex-col items-center"
+      onClick={(e) => e.stopPropagation()}  // Prevent click propagation from cards
+    >
+      <button
+        className="absolute top-2 right-3 text-2xl font-bold text-gray-400 hover:text-black"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowSignupOptions(false);
+        }}
+        aria-label="Close"
+        style={{ right: "2rem", top: "2rem" }}
+      >
+        ×
+      </button>
+      <div className="mb-6 text-lg font-semibold text-center text-white">Choose your sign up type</div>
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* User Card */}
+        <Card
+          className="w-64 cursor-pointer hover:shadow-2xl border-primary/50 transition-shadow group relative"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push("/sign-up-user");
+          }}
+        >
+                <CardHeader className="flex flex-col items-center gap-2">
+                  <div className="bg-primary/10 rounded-full p-4 mb-2 group-hover:bg-primary/20 transition">
+                    <User2 className="w-10 h-10 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl text-primary text-center">User</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-muted-foreground text-center">
+                    Sign up as a regular user to browse and save houses.
+                  </div>
+                </CardContent>
+              </Card>
+              {/* House Owner Card */}
+              <Card
+                className="w-64 cursor-pointer hover:shadow-2xl border-primary/50 transition-shadow group relative"
+                onClick={() => router.push("/sign-up-house")}
+              >
+                <CardHeader className="flex flex-col items-center gap-2">
+                  <div className="bg-primary/10 rounded-full p-4 mb-2 group-hover:bg-primary/20 transition">
+                    <Home className="w-10 h-10 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl text-primary text-center">House Owner</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-muted-foreground text-center">
+                    Sign up as a house owner to list and manage your properties.
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
