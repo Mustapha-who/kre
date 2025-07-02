@@ -122,7 +122,7 @@ export function SignUpForm({
                 />
               </div>
               {error && <div className="text-red-600 text-sm">{error}</div>}
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
                 {loading ? "Signing up..." : "Sign up"}
               </Button>
               <div className="text-center text-sm">

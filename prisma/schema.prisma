@@ -65,7 +65,7 @@ model House {
 
 model HouseImage {
   imageId    Int     @id @default(autoincrement())
-  imageUrl   String
+  imageUrl   Bytes
 
   houseId    Int
   house      House   @relation(fields: [houseId], references: [houseId])
