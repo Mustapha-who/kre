@@ -6,6 +6,31 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, MapPin, Home, Bath, Sofa } from "lucide-react";
 import { PhotoGallery } from "@/components/photo-gallery";
 
+// Helper to convert Buffer/binary to base64 data URL
+function toImageSrc(imageUrl: any) {
+  if (!imageUrl) return "/placeholder-house.jpg";
+  if (typeof imageUrl === "string") {
+    // Already a URL or base64 string
+    if (imageUrl.startsWith("data:image")) return imageUrl;
+    return imageUrl;
+  }
+  // Buffer or Uint8Array
+  if (typeof window === "undefined") {
+    // On server, Buffer is available
+    // @ts-ignore
+    const base64 = Buffer.from(imageUrl).toString("base64");
+    return `data:image/jpeg;base64,${base64}`;
+  } else {
+    // On client, convert Uint8Array to base64
+    const arr = new Uint8Array(imageUrl.data || imageUrl);
+    let binary = "";
+    for (let i = 0; i < arr.length; i++) {
+      binary += String.fromCharCode(arr[i]);
+    }
+    return `data:image/jpeg;base64,${btoa(binary)}`;
+  }
+}
+
 export default async function HouseDetailsPage(props: { params: Promise<{ id: string | string[] }> }) {
   const { id } = await props.params;
   const idParam = Array.isArray(id) ? id[0] : id;
@@ -15,21 +40,31 @@ export default async function HouseDetailsPage(props: { params: Promise<{ id: st
   const house = await getHouseById(houseId);
   if (!house) return notFound();
 
-  const mainImage = house.images[0]?.imageUrl || '/placeholder-house.jpg';
-  const thumbnailImages = house.images.slice(1, 5);
+  // Prepare images in the format PhotoGallery expects
+  const images = house.images.map(img => ({
+    imageId: img.imageId,
+    imageUrl: toImageSrc(img.imageUrl)
+  }));
+
+  const mainImage = toImageSrc(house.images[0]?.imageUrl);
+  const thumbnailImages = house.images.slice(1, 5).map(img => ({
+    imageId: img.imageId,
+    imageUrl: toImageSrc(img.imageUrl)
+  }));
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
       {/* Enhanced Images Gallery */}
       <div className="mb-8">
         <PhotoGallery
-          images={house.images}
+          images={images}
           mainImage={mainImage}
           houseTitle={house.title}
           thumbnailImages={thumbnailImages}
         />
       </div>
 
+      {/* Rest of your component remains exactly the same */}
       {/* Header Section */}
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
