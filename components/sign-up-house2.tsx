@@ -1,14 +1,22 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, MapPin, Home, Bath, Sofa, Image as ImageIcon } from "lucide-react"
+import { useParams, useRouter } from 'next/navigation'
+import { Calendar, MapPin, Home, Bath, Sofa, Image as ImageIcon, Plus } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
+export function SignUpHouse2() {
+  const params = useParams();
+  const router = useRouter();
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -20,84 +28,224 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
     country: "",
     regionName: "",
     postalCode: "",
-    images: [] as File[],
-  })
+    images: [null, null, null, null, null] as (File | null)[], // 0: main, 1-4: small
+  });
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [galleryHover, setGalleryHover] = useState<number | null>(null)
+  const fileInputRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  // Get ownerId from URL params (/sign-up-house/[ownerId])
+  const ownerId =
+    params?.id && !Array.isArray(params.id)
+      ? Number(params.id)
+      : params?.ownerId && !Array.isArray(params.ownerId)
+      ? Number(params.ownerId)
+      : null;
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof ownerId !== "number" || isNaN(ownerId) || ownerId <= 0) {
+      setError("Owner information missing");
+    }
+  }, [ownerId, router])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, idx?: number) {
     const { name, value, files } = e.target as any
-    if (name === "images" && files) {
-      setForm(f => ({ ...f, images: Array.from(files) }))
+    if (name === "images" && files && typeof idx === "number") {
+      setForm(f => {
+        const newImages = [...f.images];
+        newImages[idx] = files[0] || null;
+        return { ...f, images: newImages };
+      });
     } else {
       setForm(f => ({ ...f, [name]: value }))
     }
   }
 
+  function handleFurnishingSelect(status: string) {
+    setForm(f => ({ ...f, furnishingStatus: status }))
+    setDropdownOpen(false)
+  }
+
+  function handleGalleryClick(idx: number) {
+    fileInputRefs[idx]?.current?.click();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!ownerId) {
+      setError("Owner information missing")
+      return
+    }
     setLoading(true)
-    // Here you would send the data to your API
-    // For now, just call onSubmit if provided
-    if (onSubmit) onSubmit(form)
-    setLoading(false)
+    try {
+      const formData = new FormData()
+      formData.append("ownerId", ownerId.toString())
+      formData.append("title", form.title)
+      formData.append("description", form.description)
+      formData.append("monthlyRent", form.monthlyRent)
+      formData.append("numberOfRooms", form.numberOfRooms)
+      formData.append("numberOfBathrooms", form.numberOfBathrooms)
+      formData.append("furnishingStatus", form.furnishingStatus)
+      formData.append("city", form.city)
+      formData.append("country", form.country)
+      formData.append("regionName", form.regionName)
+      formData.append("postalCode", form.postalCode)
+      form.images.forEach((file) => {
+        if (file) formData.append("images", file)
+      })
+      const res = await fetch("/api/house/submit", {
+        method: "POST",
+        body: formData,
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Failed to submit house")
+      }
+      router.push("/main?showHouseSubmitted=1")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit house")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // For preview
-  const mainImage = form.images[0] ? URL.createObjectURL(form.images[0]) : "/placeholder-house.jpg"
-  const thumbnailImages = form.images.slice(1, 5).map(file => URL.createObjectURL(file))
+  // Generate previews for all images, always up to 5 (main + 4 small)
+  const [imagePreviews, setImagePreviews] = useState<string[]>(["", "", "", "", ""]);
+  useEffect(() => {
+    const urls = form.images.map(file => file ? URL.createObjectURL(file) : "");
+    setImagePreviews([
+      urls[0] || "",
+      urls[1] || "",
+      urls[2] || "",
+      urls[3] || "",
+      urls[4] || "",
+    ]);
+    return () => {
+      urls.forEach(url => url && URL.revokeObjectURL(url));
+    };
+  }, [form.images]);
+
+  // Helper to render image or fallback
+  function renderImage(src: string, alt: string, className: string) {
+    if (!src) return null;
+    return <img src={src} alt={alt} className={className} />;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
-      {/* Enhanced Images Gallery */}
-      <div className="mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-          {/* Main Featured Image */}
-          <div className="md:col-span-4 lg:col-span-3 rounded-lg overflow-hidden h-64 md:h-96 relative group border">
-            <img
-              src={mainImage}
-              alt="Featured"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <ImageIcon className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          {/* Thumbnail Grid */}
-          {thumbnailImages.length > 0 && (
-            <div className="hidden lg:grid grid-cols-4 gap-3">
-              {thumbnailImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="rounded-md overflow-hidden h-24 border"
-                >
-                  <img
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
+      <h1 className="text-3xl font-bold text-center mb-8">Fill in Your House Details</h1>
+      {!ownerId && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          Owner information is missing. Please complete the owner registration first.
+        </div>
+      )}
+      {/* Images Gallery */}
+      <div className="mb-8 flex flex-col md:flex-row gap-4">
+        {/* Main image */}
+        <div
+          className="relative rounded-lg overflow-hidden h-64 md:h-[400px] md:w-2/3 group border bg-muted flex items-center justify-center"
+          onMouseEnter={() => setGalleryHover(-1)}
+          onMouseLeave={() => setGalleryHover(null)}
+          onClick={() => handleGalleryClick(0)}
+          style={{ cursor: "pointer" }}
+        >
+          {renderImage(
+            imagePreviews[0],
+            "Featured",
+            "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          ) || (
+            <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <ImageIcon className="w-12 h-12" />
             </div>
           )}
-        </div>
-        <div className="mt-2">
-          <Label htmlFor="images" className="font-semibold">Upload House Images</Label>
-          <Input
-            id="images"
+          <input
+            ref={fileInputRefs[0]}
+            id="main-image"
             name="images"
             type="file"
-            multiple
             accept="image/*"
-            onChange={handleChange}
-            className="mt-2"
+            onChange={e => handleChange(e, 0)}
+            className="hidden"
           />
+          <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === -1 ? "opacity-100" : "opacity-0"}`}>
+            <ImageIcon className="w-10 h-10 text-white mb-2" />
+            <span className="text-white font-semibold">Click or drag to add/change images</span>
+          </div>
+        </div>
+        {/* 2x2 grid for small images */}
+        <div className="grid grid-cols-2 grid-rows-2 gap-2 md:w-[350px] h-64 md:h-[400px]">
+          {[1, 2, 3, 4].map((idx) =>
+            imagePreviews[idx] ? (
+              <div
+                key={idx}
+                className="relative rounded-lg overflow-hidden h-full group border bg-muted flex items-center justify-center"
+                onMouseEnter={() => setGalleryHover(idx)}
+                onMouseLeave={() => setGalleryHover(null)}
+                onClick={() => handleGalleryClick(idx)}
+                style={{ cursor: "pointer" }}
+              >
+                {renderImage(
+                  imagePreviews[idx],
+                  `House image ${idx + 1}`,
+                  "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                ) || (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <ImageIcon className="w-8 h-8" />
+                  </div>
+                )}
+                <input
+                  ref={fileInputRefs[idx]}
+                  id={`image-${idx}`}
+                  name="images"
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleChange(e, idx)}
+                  className="hidden"
+                />
+                <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === idx ? "opacity-100" : "opacity-0"}`}>
+                  <ImageIcon className="w-8 h-8 text-white mb-1" />
+                  <span className="text-xs text-white">Change image</span>
+                </div>
+              </div>
+            ) : (
+              <div
+                key={idx}
+                className="relative rounded-lg overflow-hidden h-full flex items-center justify-center border border-dashed bg-muted cursor-pointer group hover:bg-primary/10 transition"
+                onClick={() => handleGalleryClick(idx)}
+                onMouseEnter={() => setGalleryHover(idx)}
+                onMouseLeave={() => setGalleryHover(null)}
+              >
+                <input
+                  ref={fileInputRefs[idx]}
+                  id={`image-${idx}`}
+                  name="images"
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleChange(e, idx)}
+                  className="hidden"
+                />
+                <Plus className="w-8 h-8 text-gray-400 group-hover:text-primary" />
+                <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === idx ? "opacity-100" : "opacity-0"}`}>
+                  <span className="text-xs text-white">Add image</span>
+                </div>
+              </div>
+            )
+          )}
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Header Section */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -137,7 +285,6 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
 
           <Separator className="my-4" />
 
-          {/* Key Details */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-muted/50">
@@ -145,7 +292,7 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Posted</p>
-                <p className="font-medium">{new Date().toLocaleDateString()}</p>
+                <p className="font-medium">{isMounted && new Date().toLocaleDateString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -199,7 +346,6 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
           </div>
         </div>
 
-        {/* Description */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Description</CardTitle>
@@ -216,7 +362,6 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
           </CardContent>
         </Card>
 
-        {/* Features */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Features</CardTitle>
@@ -225,21 +370,29 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Sofa className="h-4 w-4" />
-                <Input
-                  name="furnishingStatus"
-                  placeholder="Furnishing Status"
-                  value={form.furnishingStatus}
-                  onChange={handleChange}
-                  className="w-40"
-                  required
-                />
+                <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-40 justify-between">
+                      {form.furnishingStatus || "Select status"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-40">
+                    <DropdownMenuItem onClick={() => handleFurnishingSelect("Furnished")}>
+                      Furnished
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleFurnishingSelect("Semi-Furnished")}>
+                      Semi-Furnished
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleFurnishingSelect("Unfurnished")}>
+                      Unfurnished
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </Badge>
-              {/* Add more features as needed */}
             </div>
           </CardContent>
         </Card>
 
-        {/* Region */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Region</CardTitle>
@@ -264,10 +417,13 @@ export function SignUpHouse2({ onSubmit }: { onSubmit?: (data: any) => void }) {
           </CardContent>
         </Card>
 
-        {/* Submit */}
         {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={loading || !ownerId}
+        >
+          {loading ? "Submitting..." : "Submit Listing"}
         </Button>
       </form>
     </div>

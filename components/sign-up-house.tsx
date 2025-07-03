@@ -26,42 +26,44 @@ export function SignUpHouse({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setError(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
+  if (!email || !name || !phoneNumber || !password || !confirmPassword) {
+    setError("All fields are required");
+    return;
+  }
 
-    if (!email || !name || !phoneNumber || !password || !confirmPassword) {
-      setError("All fields are required")
-      return
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-    setLoading(true)
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
     const res = await fetch("/api/auth/sign-up-house", {
       method: "POST",
       body: JSON.stringify({ email, name, phoneNumber, password }),
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    })
-    setLoading(false)
-    if (res.ok) {
-      const data = await res.json();
-      // Expecting { ownerId } from API
-      if (data.ownerId) {
-        router.refresh()
-        router.push(`/sign-up-house/${data.ownerId}`)
-      } else {
-        router.push("/main")
-      }
-    } else {
-      const data = await res.json()
-      setError(data.error || "Sign up failed")
-    }
-  }
+    });
 
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Sign up failed");
+    }
+
+    const data = await res.json();
+    // Redirect to house form with ownerId
+    router.push(`/sign-up-house/${data.ownerId}`);
+    
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Sign up failed");
+  } finally {
+    setLoading(false);
+  }
+}
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
