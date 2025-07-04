@@ -60,7 +60,12 @@ export default function FrontLayout({ children }: { children: React.ReactNode })
           <SearchBar />
         </Suspense>
         <div className="flex items-center gap-6">
-          <button className="text-gray-600 hover:text-black">❤️ Favorites</button>
+          <Link
+            href="/favorites"
+            className="text-gray-600 hover:text-black transition-colors"
+          >
+            ❤️ Favorites
+          </Link>
           <ProfileDropdown />
         </div>
       </nav>
