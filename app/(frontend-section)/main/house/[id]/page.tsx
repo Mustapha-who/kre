@@ -64,7 +64,6 @@ export default async function HouseDetailsPage(props: { params: Promise<{ id: st
         />
       </div>
 
-      {/* Rest of your component remains exactly the same */}
       {/* Header Section */}
       <div className="mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -72,7 +71,34 @@ export default async function HouseDetailsPage(props: { params: Promise<{ id: st
             <h1 className="text-2xl font-bold tracking-tight">{house.title}</h1>
             <div className="flex items-center gap-2 text-muted-foreground mt-1">
               <MapPin className="h-4 w-4" />
-              <span>{house.region ? `${house.region.city}, ${house.region.country}` : "Location not specified"}</span>
+              <span>
+                {house.region
+                  ? `${house.region.city}, ${house.region.country}`
+                  : "Location not specified"}
+              </span>
+            </div>
+            {/* Display postal code, street, latitude, longitude */}
+            <div className="flex flex-wrap gap-4 text-s text-muted-foreground mt-2">
+              {house.region?.postalCode && (
+                <span>
+                  <strong>Postal Code:</strong> {house.region.postalCode}
+                </span>
+              )}
+              {house.region?.street && (
+                <span>
+                  <strong>Street:</strong> {house.region.street}
+                </span>
+              )}
+              {house.region?.latitude !== null && house.region?.latitude !== undefined && (
+                <span>
+                  <strong>Latitude:</strong> {house.region.latitude}
+                </span>
+              )}
+              {house.region?.longitude !== null && house.region?.longitude !== undefined && (
+                <span>
+                  <strong>Longitude:</strong> {house.region.longitude}
+                </span>
+              )}
             </div>
           </div>
           <Badge variant={house.isAvailable ? "default" : "destructive"} className="self-start">

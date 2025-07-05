@@ -28,6 +28,9 @@ export function SignUpHouse2() {
     country: "",
     regionName: "",
     postalCode: "",
+    street: "",
+    latitude: "",
+    longitude: "",
     images: [null, null, null, null, null] as (File | null)[], // 0: main, 1-4: small
   });
   const [error, setError] = useState<string | null>(null)
@@ -101,6 +104,9 @@ export function SignUpHouse2() {
       formData.append("country", form.country)
       formData.append("regionName", form.regionName)
       formData.append("postalCode", form.postalCode)
+      formData.append("street", form.street)
+      formData.append("latitude", form.latitude)
+      formData.append("longitude", form.longitude)
       form.images.forEach((file) => {
         if (file) formData.append("images", file)
       })
@@ -257,26 +263,6 @@ export function SignUpHouse2() {
                 className="text-2xl font-bold tracking-tight mb-2"
                 required
               />
-              <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                <MapPin className="h-4 w-4" />
-                <Input
-                  name="city"
-                  placeholder="City"
-                  value={form.city}
-                  onChange={handleChange}
-                  className="w-32"
-                  required
-                />
-                <span>,</span>
-                <Input
-                  name="country"
-                  placeholder="Country"
-                  value={form.country}
-                  onChange={handleChange}
-                  className="w-32"
-                  required
-                />
-              </div>
             </div>
             <Badge variant="secondary" className="self-start">
               Available
@@ -398,11 +384,25 @@ export function SignUpHouse2() {
             <CardTitle>Region</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 name="regionName"
                 placeholder="Region Name"
                 value={form.regionName}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                name="city"
+                placeholder="City"
+                value={form.city}
+                onChange={handleChange}
+                required
+              />
+              <Input
+                name="country"
+                placeholder="Country"
+                value={form.country}
                 onChange={handleChange}
                 required
               />
@@ -413,6 +413,32 @@ export function SignUpHouse2() {
                 onChange={handleChange}
                 required
               />
+              <Input
+                name="street"
+                placeholder="Street"
+                value={form.street}
+                onChange={handleChange}
+              />
+              <div className="flex gap-2">
+                <Input
+                  name="latitude"
+                  placeholder="Latitude"
+                  value={form.latitude}
+                  onChange={handleChange}
+                  type="number"
+                  step="any"
+                  className="w-1/2"
+                />
+                <Input
+                  name="longitude"
+                  placeholder="Longitude"
+                  value={form.longitude}
+                  onChange={handleChange}
+                  type="number"
+                  step="any"
+                  className="w-1/2"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
