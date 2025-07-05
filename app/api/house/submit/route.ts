@@ -37,6 +37,9 @@ export async function POST(req: NextRequest) {
       country: formData.get("country") as string,
       regionName: formData.get("regionName") as string,
       postalCode: formData.get("postalCode") as string,
+      street: formData.get("street") as string,
+      latitude: formData.get("latitude") ? parseFloat(formData.get("latitude") as string) : undefined,
+      longitude: formData.get("longitude") ? parseFloat(formData.get("longitude") as string) : undefined,
       images: formData.getAll("images") as File[]
     };
 
@@ -59,6 +62,7 @@ export async function POST(req: NextRequest) {
         city: requiredFields.city,
         country: requiredFields.country,
         postalCode: requiredFields.postalCode,
+        street: requiredFields.street,
       },
     });
 
@@ -69,6 +73,19 @@ export async function POST(req: NextRequest) {
           city: requiredFields.city,
           country: requiredFields.country,
           postalCode: requiredFields.postalCode,
+          street: requiredFields.street,
+          latitude: requiredFields.latitude,
+          longitude: requiredFields.longitude,
+        },
+      });
+    } else {
+      // Optionally update region with new lat/lng/street if missing
+      await prisma.region.update({
+        where: { regionId: region.regionId },
+        data: {
+          street: requiredFields.street,
+          latitude: requiredFields.latitude,
+          longitude: requiredFields.longitude,
         },
       });
     }
