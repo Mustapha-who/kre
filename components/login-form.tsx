@@ -50,6 +50,14 @@ export function LoginForm({
         throw new Error(data.error || "Login failed");
       }
 
+      const data = await res.json();
+      // If backend says to redirect to sign-up-house2, do so
+      if (data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
+
+      // Default: go to main
       router.refresh();
       router.push("/main");
 

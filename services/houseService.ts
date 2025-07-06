@@ -2,41 +2,62 @@ import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
+// Helper to get userId or ownerId from JWT cookie
+async function getUserOrOwnerIdFromToken(): Promise<{ userId?: number; ownerId?: number }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) return {};
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET || "changeme") as { userId?: number; ownerId?: number };
+    return { userId: payload.userId, ownerId: payload.ownerId };
+  } catch {
+    return {};
+  }
+}
+
 export async function getHouses() {
-  const userId = await getUserIdFromToken();
-  
+  const { userId, ownerId } = await getUserOrOwnerIdFromToken();
+
   const houses = await prisma.house.findMany({
     include: {
       images: true,
       region: true,
       owner: true,
-      savedBy: userId ? {
-        where: { userId },
+      savedBy: {
+        where: userId
+          ? { userId }
+          : ownerId
+          ? { ownerId }
+          : undefined,
         select: { savedId: true }
-      } : false,
+      },
     },
   });
 
   return houses.map(house => ({
     ...house,
     isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
-    savedBy: undefined, // Remove this from the response
+    savedBy: undefined,
   }));
 }
 
 export async function getHouseById(houseId: number) {
-  const userId = await getUserIdFromToken();
-  
+  const { userId, ownerId } = await getUserOrOwnerIdFromToken();
+
   const house = await prisma.house.findUnique({
     where: { houseId },
     include: {
       images: true,
       region: true,
       owner: true,
-      savedBy: userId ? {
-        where: { userId },
+      savedBy: {
+        where: userId
+          ? { userId }
+          : ownerId
+          ? { ownerId }
+          : undefined,
         select: { savedId: true }
-      } : false,
+      },
     },
   });
 
@@ -45,21 +66,18 @@ export async function getHouseById(houseId: number) {
   return {
     ...house,
     isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
-    savedBy: undefined, // Remove this from the response
+    savedBy: undefined,
   };
 }
 
 export async function searchHouses(searchTerm: string) {
-  const userId = await getUserIdFromToken();
+  const { userId, ownerId } = await getUserOrOwnerIdFromToken();
 
-  // Try to parse the searchTerm for combined formats like "Ariana - 2080" or "Ariana Ville, Ariana, Tunisia, 2080"
-  // We'll split on common separators and try to match any of the fields
   const parts = searchTerm
     .split(/[,|-]/)
     .map((p) => p.trim())
     .filter(Boolean);
 
-  // Build OR conditions for each part, matching any region field
   const regionOr: any[] = [];
   for (const part of parts) {
     regionOr.push(
@@ -70,7 +88,6 @@ export async function searchHouses(searchTerm: string) {
     );
   }
 
-  // If no parts, fallback to original logic
   const where =
     regionOr.length > 0
       ? { OR: regionOr }
@@ -89,12 +106,14 @@ export async function searchHouses(searchTerm: string) {
       images: true,
       region: true,
       owner: true,
-      savedBy: userId
-        ? {
-            where: { userId },
-            select: { savedId: true }
-          }
-        : false,
+      savedBy: {
+        where: userId
+          ? { userId }
+          : ownerId
+          ? { ownerId }
+          : undefined,
+        select: { savedId: true }
+      },
     },
   });
 
@@ -102,6 +121,36 @@ export async function searchHouses(searchTerm: string) {
     ...house,
     isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
     savedBy: undefined,
+  }));
+}
+
+export async function getFavoriteHouses() {
+  const { userId, ownerId } = await getUserOrOwnerIdFromToken();
+  if (!userId && !ownerId) return [];
+
+  const favorites = await prisma.savedHouse.findMany({
+    where: userId
+      ? { userId }
+      : ownerId
+      ? { ownerId }
+      : {},
+    include: {
+      house: {
+        include: {
+          images: true,
+          region: true,
+          owner: true,
+        },
+      },
+    },
+    orderBy: { dateSaved: "desc" },
+  });
+
+  return favorites.map(fav => ({
+    ...fav.house,
+    isFavorite: true,
+    images: fav.house.images,
+    region: fav.house.region,
   }));
 }
 
@@ -147,44 +196,4 @@ export async function getSearchSuggestions(query: string) {
 
   // Return unique, non-empty suggestions
   return Array.from(suggestions).filter(Boolean).slice(0, 10);
-}
-
-// Helper to get userId from JWT cookie
-async function getUserIdFromToken(): Promise<number | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-  if (!token) return null;
-  
-  try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || "changeme") as { userId?: number };
-    return payload.userId ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function getFavoriteHouses() {
-  const userId = await getUserIdFromToken();
-  if (!userId) return [];
-
-  const favorites = await prisma.savedHouse.findMany({
-    where: { userId },
-    include: {
-      house: {
-        include: {
-          images: true,
-          region: true,
-          owner: true,
-        },
-      },
-    },
-    orderBy: { dateSaved: "desc" },
-  });
-
-  return favorites.map(fav => ({
-    ...fav.house,
-    isFavorite: true, // Add this flag to indicate it's a favorite
-    images: fav.house.images,
-    region: fav.house.region,
-  }));
 }
