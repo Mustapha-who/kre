@@ -37,7 +37,8 @@ model HouseOwner {
 
   houses             House[]
   inquiriesReceived  Inquiry[]   // inquiries received by this owner
-  reviews            Review[]    // reviews rating this owner
+  reviews            Review[] // reviews rating this owner
+  savedHouses  SavedHouse[]   
 }
 
 model House {
@@ -107,8 +108,11 @@ model SavedHouse {
   savedId    Int      @id @default(autoincrement())
   dateSaved  DateTime @default(now())
 
-  userId     Int
-  user       User     @relation(fields: [userId], references: [userId])
+  userId     Int?     // <-- Make nullable for either user or owner
+  user       User?    @relation(fields: [userId], references: [userId])
+
+  ownerId    Int?     // <-- Add this for house owners
+  owner      HouseOwner? @relation(fields: [ownerId], references: [ownerId])
 
   houseId    Int
   house      House    @relation(fields: [houseId], references: [houseId])
