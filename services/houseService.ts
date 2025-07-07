@@ -197,3 +197,35 @@ export async function getSearchSuggestions(query: string) {
   // Return unique, non-empty suggestions
   return Array.from(suggestions).filter(Boolean).slice(0, 10);
 }
+
+export async function getHousesByLocation(country: string, city: string) {
+  const { userId, ownerId } = await getUserOrOwnerIdFromToken();
+
+  const houses = await prisma.house.findMany({
+    where: {
+      region: {
+        country: { equals: country, mode: "insensitive" },
+        city: { equals: city, mode: "insensitive" }
+      }
+    },
+    include: {
+      images: true,
+      region: true,
+      owner: true,
+      savedBy: {
+        where: userId
+          ? { userId }
+          : ownerId
+          ? { ownerId }
+          : undefined,
+        select: { savedId: true }
+      },
+    },
+  });
+
+  return houses.map(house => ({
+    ...house,
+    isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
+    savedBy: undefined,
+  }));
+}
