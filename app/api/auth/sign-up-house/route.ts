@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
         name,
         phoneNumber,
         password: hashedPassword,
-        verificationStatus: false,
         totalProperties: 0
       }
     });

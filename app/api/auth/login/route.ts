@@ -15,6 +15,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
+    // Try to find admin first
+    const admin = await prisma.admin.findUnique({
+      where: { email: email.toLowerCase().trim() },
+      select: {
+        adminId: true,
+        email: true,
+        password: true
+      }
+    });
+
+    if (admin) {
+      const passwordValid = await bcrypt.compare(password, admin.password);
+      if (passwordValid) {
+        // Generate JWT token for admin
+        const token = jwt.sign(
+          { adminId: admin.adminId, email: admin.email, role: "admin" },
+          JWT_SECRET,
+          { expiresIn: JWT_EXPIRES_IN }
+        );
+
+        const res = NextResponse.json({
+          success: true,
+          admin: {
+            adminId: admin.adminId,
+            email: admin.email
+          },
+          redirect: "/admin"
+        });
+
+        res.cookies.set("admin-token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60, // 1 hour
+        });
+
+        return res;
+      }
+    }
+
     // Try to find user (regular user)
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },

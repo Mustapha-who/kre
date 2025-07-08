@@ -4,7 +4,6 @@ import { getHouses, searchHouses } from "@/services/houseService";
 import Link from "next/link";
 import { HouseSubmittedModal } from "@/components/house-submitted-modal";
 import { FavoriteButton } from "@/components/favorite-button";
-import { Button } from "@/components/ui/button";
 
 interface SearchParams {
   q?: string | string[];

@@ -1,29 +1,59 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Clock } from "lucide-react";
 
 export function HouseSubmittedModal() {
-  const [show, setShow] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("showHouseSubmitted") === "1") setShow(true);
+    if (searchParams.get("showHouseSubmitted") === "1") {
+      setOpen(true);
     }
-  }, []);
-  if (!show) return null;
+  }, [searchParams]);
+
+  const handleClose = () => {
+    setOpen(false);
+    // Remove the query parameter from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("showHouseSubmitted");
+    router.replace(url.pathname + url.search);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center gap-4 max-w-md">
-        <div className="text-2xl font-bold text-primary mb-2">Thank you for submitting your home!</div>
-        <div className="text-muted-foreground text-center">
-          It will take up to 24 hours to review the information. You can check the status in your settings.
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+            <Clock className="h-6 w-6 text-orange-600" />
+          </div>
+          <DialogTitle className="text-xl">
+            House Submitted Successfully!
+          </DialogTitle>
+          <DialogDescription className="text-center mt-2">
+            Your house listing has been submitted and is now under review.
+            <br />
+            <strong>It will be reviewed and approved within 24 hours.</strong>
+            <br />
+            You'll receive a notification once it's live on the platform.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center mt-4">
+          <Button onClick={handleClose} className="w-full">
+            Got it, thanks!
+          </Button>
         </div>
-        <button
-          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-          onClick={() => setShow(false)}
-        >
-          Close
-        </button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -19,6 +19,9 @@ export async function getHouses() {
   const { userId, ownerId } = await getUserOrOwnerIdFromToken();
 
   const houses = await prisma.house.findMany({
+    where: {
+      verificationStatus: true, // Only show verified houses
+    },
     include: {
       images: true,
       region: true,
@@ -101,7 +104,12 @@ export async function searchHouses(searchTerm: string) {
         };
 
   const houses = await prisma.house.findMany({
-    where,
+    where: {
+      AND: [
+        { verificationStatus: true }, // Only show verified houses
+        where
+      ]
+    },
     include: {
       images: true,
       region: true,
@@ -203,10 +211,15 @@ export async function getHousesByLocation(country: string, city: string) {
 
   const houses = await prisma.house.findMany({
     where: {
-      region: {
-        country: { equals: country, mode: "insensitive" },
-        city: { equals: city, mode: "insensitive" }
-      }
+      AND: [
+        { verificationStatus: true }, // Only show verified houses
+        {
+          region: {
+            country: { equals: country, mode: "insensitive" },
+            city: { equals: city, mode: "insensitive" }
+          }
+        }
+      ]
     },
     include: {
       images: true,

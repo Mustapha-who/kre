@@ -13,6 +13,12 @@ datasource db {
   
 }
 
+model Admin{
+  adminId    Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+}
+
 
 model User {
   userId       Int          @id @default(autoincrement())
@@ -32,7 +38,6 @@ model HouseOwner {
   password           String
   name               String
   phoneNumber        String
-  verificationStatus Boolean     @default(false)
   totalProperties    Int         @default(0)
 
   houses             House[]
@@ -50,6 +55,7 @@ model House {
   numberOfBathrooms Int
   furnishingStatus  String
   isAvailable       Boolean      @default(true)
+  verificationStatus Boolean     @default(false)
   datePosted        DateTime     @default(now())
 
   ownerId           Int
