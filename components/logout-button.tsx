@@ -1,12 +1,26 @@
 "use client";
+import { useRouter } from "next/navigation";
+
 export function LogoutButton() {
+  const router = useRouter();
+
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    window.location.href = "/login";
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still redirect even if API call fails
+      router.push("/login");
+    }
   };
+
   return (
-    <button  type="button" className="w-full text-left cursor-pointer" onClick={handleLogout}>
-      Logout
+    <button onClick={handleLogout} className="w-full text-left">
+      Log out
     </button>
   );
 }

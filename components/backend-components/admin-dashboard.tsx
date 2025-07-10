@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, Eye, TrendingUp, Building2, Users, AlertTriangle } from "lucide-react";
+import { CheckCircle, Clock, Eye,Building2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 // Helper function to safely convert image data to base64
 function imageToBase64(imageData: any): string {
@@ -281,9 +282,11 @@ export function AdminDashboard() {
         
         {verifiedHouses.length > 8 && (
           <div className="text-center">
-            <Button variant="outline">
-              View All Verified Houses ({verifiedHouses.length})
-            </Button>
+            <Link href="/admin/houses/verified">
+              <Button variant="outline">
+                View All Verified Houses ({verifiedHouses.length})
+              </Button>
+            </Link>
           </div>
         )}
       </div>
