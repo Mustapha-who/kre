@@ -19,7 +19,7 @@ export function LogoutButton() {
   };
 
   return (
-    <button onClick={handleLogout} className="w-full text-left">
+    <button onClick={handleLogout} className="cursor-pointer w-full text-left">
       Log out
     </button>
   );
