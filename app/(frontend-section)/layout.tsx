@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "@/components/logout-button";
 import { SettingsButton } from "@/components/settings-button";
+import { AddMoreHouses } from "@/components/add-more-houses";
 
 function SearchBarFallback() {
   return (
@@ -36,6 +37,7 @@ function ProfileDropdown() {
       <DropdownMenuContent className="w-44" align="end">
         <DropdownMenuLabel>Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <AddMoreHouses />
         <DropdownMenuItem>
           <SettingsButton />
         </DropdownMenuItem>
