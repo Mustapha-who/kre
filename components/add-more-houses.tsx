@@ -35,7 +35,7 @@ export function AddMoreHouses() {
 
   const handleAddMoreHouses = () => {
     if (userInfo?.ownerId) {
-      router.push(`/sign-up-house/${userInfo.ownerId}`);
+      router.push(`/my-houses/${userInfo.ownerId}`);
     }
   };
 
