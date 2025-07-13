@@ -40,56 +40,56 @@ export function MyHousesClient({ ownerId }: MyHousesClientProps) {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-3 text-sm text-muted-foreground">Loading your houses...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-base text-muted-foreground">Loading your houses...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Home className="h-6 w-6" />
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Home className="h-8 w-8 text-primary" />
             My Houses
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-2">
             Manage and view all your property listings
           </p>
         </div>
-        <Button onClick={handleAddMoreHouses} className="flex items-center gap-2 h-9">
-          <Plus className="h-4 w-4" />
+        <Button onClick={handleAddMoreHouses} size="lg" className="flex items-center gap-2 shadow-md">
+          <Plus className="h-5 w-5" />
           Add More Houses
         </Button>
       </div>
 
       {houses.length === 0 ? (
-        <Card className="text-center p-6">
-          <CardContent className="space-y-3">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-              <Home className="h-8 w-8 text-muted-foreground" />
+        <Card className="text-center p-8 bg-gradient-to-br from-background to-muted/30">
+          <CardContent className="space-y-6">
+            <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+              <Home className="h-10 w-10 text-primary" />
             </div>
             <div>
-              <h3 className="text-base font-semibold">No houses posted yet</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2">No houses posted yet</h3>
+              <p className="text-base text-muted-foreground">
                 Start by posting your first property listing
               </p>
             </div>
-            <Button onClick={handleAddMoreHouses} className="flex items-center gap-2 h-9">
-              <Plus className="h-4 w-4" />
+            <Button onClick={handleAddMoreHouses} size="lg" className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
               Post Your First House
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {houses.map((house) => (
-            <div key={house.houseId} className="group relative">
-              <div className="hover:shadow-md transition-shadow duration-200 hover:translate-y-[-2px] block h-full">
+            <Card key={house.houseId} className="group relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-0 shadow-md">
+              <div className="relative">
                 {/* Image container */}
                 <div className="w-full overflow-hidden">
                   <img 
@@ -99,45 +99,67 @@ export function MyHousesClient({ ownerId }: MyHousesClientProps) {
                         : '/placeholder-house.jpg'
                     }
                     alt={house.title}
-                    className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                
-                {/* Content area */}
-                <div className="p-3 flex-grow border rounded-b-lg shadow-sm bg-background">
-                  <CardTitle className="text-sm font-semibold line-clamp-1">{house.title}</CardTitle>
-                  <CardDescription className="text-xs mt-1 line-clamp-1">
-                    {house.region.regionName && `${house.region.regionName}`}
-                  </CardDescription>
-                  <div className="mt-1 text-sm font-semibold text-primary">
-                    {house.monthlyRent.toLocaleString()}dt / month
-                  </div>
-                  <ul className="mt-1 text-xs text-muted-foreground space-y-1">
-                    <li className="flex items-center gap-1">
-                      <Bed className="h-3 w-3" />
-                      <span>{`${house.numberOfRooms} Beds`}</span>
-                      <span>•</span>
-                      <Bath className="h-3 w-3" />
-                      <span>{`${house.numberOfBathrooms} Bath`}</span>
-                    </li>
-                    <li className="flex items-center gap-1 text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(house.datePosted).toLocaleDateString()}
-                    </li>
-                  </ul>
-                  
-                  {/* Status badges moved to bottom */}
-                  <div className="flex gap-1 mt-2">
-                    <Badge variant={house.verificationStatus ? "default" : "secondary"} className="text-xs">
-                      {house.verificationStatus ? 'Verified' : 'Pending'}
-                    </Badge>
-                    <Badge variant={house.isAvailable ? "outline" : "destructive"} className="text-xs">
-                      {house.isAvailable ? 'Available' : 'Rented'}
-                    </Badge>
+              </div>
+              
+              {/* Content area */}
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <CardTitle className="text-lg font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+                    {house.title}
+                  </CardTitle>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                    <MapPin className="h-4 w-4" />
+                    <span className="line-clamp-1">{house.region.regionName}, {house.region.city}</span>
                   </div>
                 </div>
-              </div>
-            </div>
+                
+                <div className="text-2xl font-bold text-primary">
+                  {house.monthlyRent.toLocaleString()}dt
+                  <span className="text-sm font-normal text-muted-foreground ml-1">/month</span>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Bed className="h-4 w-4" />
+                    <span className="font-medium">{house.numberOfRooms} Beds</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Bath className="h-4 w-4" />
+                    <span className="font-medium">{house.numberOfBathrooms} Baths</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Posted {new Date(house.datePosted).toLocaleDateString()}</span>
+                </div>
+                
+                <div className="pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {house.furnishingStatus}
+                    </span>
+                    <div className="flex gap-2">
+                      <Badge 
+                        variant={house.verificationStatus ? "default" : "secondary"} 
+                        className="text-xs font-medium"
+                      >
+                        {house.verificationStatus ? '✓ Verified' : '⏳ Pending'}
+                      </Badge>
+                      <Badge 
+                        variant={house.isAvailable ? "outline" : "destructive"} 
+                        className="text-xs font-medium"
+                      >
+                        {house.isAvailable ? '🟢 Available' : '🔴 Rented'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
