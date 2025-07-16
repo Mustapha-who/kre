@@ -62,10 +62,8 @@ export function SettingsUserInfo() {
     );
   }
 
-  const displayName = user.isHouseOwner ? user.name : `${user.firstName} ${user.lastName}`;
-  const initials = user.isHouseOwner 
-    ? user.name?.charAt(0).toUpperCase() 
-    : `${user.firstName?.charAt(0)}${user.lastName?.charAt(0)}`.toUpperCase();
+  const displayName = `${user.firstName} ${user.lastName}`;
+  const initials = `${user.firstName?.charAt(0)}${user.lastName?.charAt(0)}`.toUpperCase();
 
   return (
     <Card className="w-full max-w-2xl">
@@ -118,32 +116,22 @@ export function SettingsUserInfo() {
               </div>
             </div>
             
-            {!user.isHouseOwner ? (
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">First Name</label>
-                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{user.firstName}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Last Name</label>
-                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{user.lastName}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <label className="text-sm font-medium text-muted-foreground">First Name</label>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{user.name}</span>
+                  <span className="text-sm">{user.firstName}</span>
                 </div>
               </div>
-            )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Last Name</label>
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{user.lastName}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -172,3 +160,4 @@ export function SettingsUserInfo() {
     </Card>
   );
 }
+              
