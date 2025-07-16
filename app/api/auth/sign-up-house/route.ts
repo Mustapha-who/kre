@@ -8,10 +8,10 @@ const JWT_EXPIRES_IN = "1h";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, phoneNumber, password } = await req.json();
+    const { email, firstName, lastName, phoneNumber, password } = await req.json();
 
     // Validate fields
-    if (!email || !name || !phoneNumber || !password) {
+    if (!email || !firstName || !lastName || !phoneNumber || !password) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -30,13 +30,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create new owner
+    // Create new owner - combine firstName and lastName into name for database
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const owner = await prisma.houseOwner.create({
       data: {
         email: email.toLowerCase().trim(),
-        name,
+        name: `${firstName} ${lastName}`, // Combine for database storage
         phoneNumber,
         password: hashedPassword,
         totalProperties: 0

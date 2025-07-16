@@ -33,9 +33,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Owner not found" }, { status: 404 });
       }
 
+      // Split name into firstName and lastName for response
+      const nameParts = owner.name.split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
       return NextResponse.json({
         isHouseOwner: true,
         ownerId: owner.ownerId,
+        firstName: firstName,
+        lastName: lastName,
         name: owner.name,
         email: owner.email,
       });
@@ -58,6 +65,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         isHouseOwner: false,
         userId: user.userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
         name: `${user.firstName} ${user.lastName}`,
         email: user.email,
       });

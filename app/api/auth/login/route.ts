@@ -133,6 +133,11 @@ export async function POST(req: NextRequest) {
         { expiresIn: JWT_EXPIRES_IN }
       );
 
+      // Split name into firstName and lastName for response
+      const nameParts = houseOwner.name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
       // If no house, redirect to sign-up-house2
       if (!hasHouse) {
         const res = NextResponse.json({
@@ -140,7 +145,8 @@ export async function POST(req: NextRequest) {
           owner: {
             ownerId: houseOwner.ownerId,
             email: houseOwner.email,
-            name: houseOwner.name,
+            firstName: firstName,
+            lastName: lastName,
             phoneNumber: houseOwner.phoneNumber
           },
           redirect: `/sign-up-house/${houseOwner.ownerId}`
@@ -161,7 +167,8 @@ export async function POST(req: NextRequest) {
         owner: {
           ownerId: houseOwner.ownerId,
           email: houseOwner.email,
-          name: houseOwner.name,
+          firstName: firstName,
+          lastName: lastName,
           phoneNumber: houseOwner.phoneNumber
         },
         redirect: "/main"
