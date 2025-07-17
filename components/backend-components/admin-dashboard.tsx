@@ -88,8 +88,8 @@ export function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -101,38 +101,38 @@ export function AdminDashboard() {
   return (
     <div className="flex flex-1 flex-col gap-4">
       {/* Stats Cards */}
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <div className="grid auto-rows-min gap-3 md:grid-cols-3">
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-sm font-medium">Total Houses</CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalHouses}</div>
+          <CardContent className="p-0">
+            <div className="text-xl font-bold">{totalHouses}</div>
             <p className="text-xs text-muted-foreground">
               Total properties in system
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{unverifiedHouses.length}</div>
+          <CardContent className="p-0">
+            <div className="text-xl font-bold text-orange-600">{unverifiedHouses.length}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting verification
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-sm font-medium">Verified</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{verifiedHouses.length}</div>
+          <CardContent className="p-0">
+            <div className="text-xl font-bold text-green-600">{verifiedHouses.length}</div>
             <p className="text-xs text-muted-foreground">
               Approved properties
             </p>
@@ -141,27 +141,27 @@ export function AdminDashboard() {
       </div>
 
       {/* Pending Verification Section */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-orange-500" />
-          <h2 className="text-xl font-semibold">Pending Verification</h2>
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+          <Clock className="h-4 w-4 text-orange-500" />
+          <h2 className="text-lg font-semibold">Pending Verification</h2>
+          <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
             {unverifiedHouses.length}
           </Badge>
         </div>
         
         {unverifiedHouses.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="p-4">
+            <CardContent className="pt-2">
               <div className="text-center text-muted-foreground">
-                <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                <p className="text-lg font-medium">All caught up!</p>
-                <p className="text-sm">No houses pending verification.</p>
+                <CheckCircle className="mx-auto h-8 w-8 text-green-500 mb-2" />
+                <p className="text-sm font-medium">All caught up!</p>
+                <p className="text-xs">No houses pending verification.</p>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {unverifiedHouses.map((house) => (
               <Card key={house.houseId} className="overflow-hidden">
                 {house.images[0] && (
@@ -173,31 +173,31 @@ export function AdminDashboard() {
                     />
                     <Badge 
                       variant="secondary" 
-                      className="absolute top-2 right-2 bg-orange-100 text-orange-800"
+                      className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
                     >
                       Pending
                     </Badge>
                   </div>
                 )}
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg line-clamp-1">{house.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
+                  <p className="text-xs text-muted-foreground line-clamp-1">
                     {house.region.city}, {house.region.country}
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                <CardContent className="space-y-3 pt-0">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
                       <span>Owner:</span>
                       <span className="font-medium">{house.owner.name}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs">
                       <span>Rent:</span>
                       <span className="font-medium text-primary">
                         {house.monthlyRent.toLocaleString()}dt/month
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs">
                       <span>Posted:</span>
                       <span className="text-muted-foreground">
                         {new Date(house.datePosted).toLocaleDateString()}
@@ -208,14 +208,14 @@ export function AdminDashboard() {
                     <Button
                       size="sm"
                       onClick={() => handleVerifyHouse(house.houseId, true)}
-                      className="flex-1"
+                      className="flex-1 h-8 text-xs"
                       disabled={actionLoading}
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      <CheckCircle className="w-3 h-3 mr-1" />
                       Approve
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4" />
+                    <Button variant="outline" size="sm" className="h-8 px-2">
+                      <Eye className="w-3 h-3" />
                     </Button>
                   </div>
                 </CardContent>
@@ -226,27 +226,27 @@ export function AdminDashboard() {
       </div>
 
       {/* Verified Houses Section */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-green-500" />
-          <h2 className="text-xl font-semibold">Recently Verified</h2>
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <h2 className="text-lg font-semibold">Recently Verified</h2>
+          <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
             {verifiedHouses.slice(0, 8).length}
           </Badge>
         </div>
         
         {verifiedHouses.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="p-4">
+            <CardContent className="pt-2">
               <div className="text-center text-muted-foreground">
-                <Building2 className="mx-auto h-12 w-12 mb-4" />
-                <p className="text-lg font-medium">No verified houses</p>
-                <p className="text-sm">Verified houses will appear here.</p>
+                <Building2 className="mx-auto h-8 w-8 mb-2" />
+                <p className="text-sm font-medium">No verified houses</p>
+                <p className="text-xs">Verified houses will appear here.</p>
               </div>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             {verifiedHouses.slice(0, 8).map((house) => (
               <Card key={house.houseId} className="overflow-hidden">
                 {house.images[0] && (
@@ -258,19 +258,19 @@ export function AdminDashboard() {
                     />
                     <Badge 
                       variant="default" 
-                      className="absolute top-2 right-2 bg-green-100 text-green-800"
+                      className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
                     >
                       Verified
                     </Badge>
                   </div>
                 )}
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-1 pt-2">
                   <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
                   <p className="text-xs text-muted-foreground line-clamp-1">
                     {house.region.city}, {house.region.country}
                   </p>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <p className="text-sm font-semibold text-primary">
                     {house.monthlyRent.toLocaleString()}dt/month
                   </p>
@@ -283,7 +283,7 @@ export function AdminDashboard() {
         {verifiedHouses.length > 8 && (
           <div className="text-center">
             <Link href="/admin/houses/verified">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 View All Verified Houses ({verifiedHouses.length})
               </Button>
             </Link>
