@@ -1,6 +1,5 @@
-import React, { Suspense } from "react";
+import React from "react";
 import Link from "next/link";
-import { SearchBar } from "@/components/search-bar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +11,6 @@ import {
 import { LogoutButton } from "@/components/logout-button";
 import { SettingsButton } from "@/components/settings-button";
 import { AddMoreHouses } from "@/components/add-more-houses";
-
-function SearchBarFallback() {
-  return (
-    <div className="flex-1 mx-8">
-      <input
-        type="text"
-        placeholder="Search by city, region, country, or postal code..."
-        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent opacity-50"
-        disabled
-      />
-    </div>
-  );
-}
 
 function ProfileDropdown() {
   return (
@@ -58,9 +44,6 @@ export default function FrontLayout({ children }: { children: React.ReactNode })
         <Link href="/main" className="text-2xl font-bold">
           Kre.TN
         </Link>
-        <Suspense fallback={<SearchBarFallback />}>
-          <SearchBar />
-        </Suspense>
         <div className="flex items-center gap-6">
           <Link
             href="/favorites"

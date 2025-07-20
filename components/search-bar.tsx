@@ -1,158 +1,167 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useSearchQuery } from "@/components/use-search-query";
+
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Search, MapPin, X } from "lucide-react";
 
 export function SearchBar() {
-  const router = useRouter();
-  const search = useSearchQuery();
-  const [input, setInput] = useState("");
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Handle mounting and search params
+  // Initialize with current search param
   useEffect(() => {
-    setMounted(true);
-    setInput(search);
-  }, [search]);
+    const currentQuery = searchParams.get("q") || "";
+    setQuery(currentQuery);
+  }, [searchParams]);
 
-  // Cleanup timeout on unmount
+  // Debounced search suggestions
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const fetchSuggestions = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSuggestions([]);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/search-suggestions?q=${encodeURIComponent(q.trim())}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data);
+    const timeoutId = setTimeout(async () => {
+      if (query.length >= 2) {
+        setIsLoading(true);
+        try {
+          const res = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data.suggestions || []);
+            setShowSuggestions(true);
+          }
+        } catch (error) {
+          console.error("Failed to fetch suggestions:", error);
+        } finally {
+          setIsLoading(false);
+        }
       } else {
-        console.error('Failed to fetch suggestions:', res.status);
         setSuggestions([]);
+        setShowSuggestions(false);
       }
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInput(value);
-    setShowSuggestions(true);
-    
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      fetchSuggestions(value);
     }, 300);
-  };
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowSuggestions(false);
-    
-    if (!input.trim()) {
-      router.push('/main');
-      return;
+    if (query.trim()) {
+      router.push(`/main?q=${encodeURIComponent(query.trim())}`);
+      setShowSuggestions(false);
     }
-    const params = new URLSearchParams();
-    params.set("q", input.trim());
-    router.push(`/main?${params.toString()}`);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setInput(suggestion);
-    setShowSuggestions(false);
+    setQuery(suggestion);
     router.push(`/main?q=${encodeURIComponent(suggestion)}`);
+    setShowSuggestions(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setShowSuggestions(false);
-      inputRef.current?.blur();
-    }
+  const clearSearch = () => {
+    setQuery("");
+    router.push("/main");
+    setShowSuggestions(false);
   };
-
-  const handleBlur = () => {
-    setTimeout(() => setShowSuggestions(false), 150);
-  };
-
-  // Don't render until mounted to prevent hydration issues
-  if (!mounted) {
-    return (
-      <div className="flex-1 mx-8">
-        <input
-          type="text"
-          placeholder="Search by city, region, country, or postal code..."
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          disabled
-        />
-      </div>
-    );
-  }
 
   return (
-    <form onSubmit={handleSubmit} className="flex-1 mx-8 relative">
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="Search by city, region, country, or postal code..."
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          value={input}
-          onChange={handleChange}
-          onFocus={() => input && setShowSuggestions(true)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          autoComplete="off"
-        />
-        
-        {isLoading && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+    <div className="relative w-full">
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-muted-foreground" />
           </div>
-        )}
-      </div>
-      
-      {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-auto">
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={index}
-              className="px-4 py-2 cursor-pointer hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
-              onMouseDown={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion}
-            </li>
-          ))}
-        </ul>
+          <Input
+            type="text"
+            placeholder="Search by city, region, country, or postal code..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => query.length >= 2 && setShowSuggestions(true)}
+            className="w-full pl-10 pr-20 py-6 text-base border-2 border-input focus:border-primary transition-colors"
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 gap-2">
+            {query && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearSearch}
+                className="h-6 w-6 p-0 hover:bg-muted"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            <Button type="submit" size="sm" className="h-8">
+              Search
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* Search Suggestions Dropdown */}
+      {showSuggestions && (
+        <Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-lg border bg-popover">
+          <div className="p-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+              </div>
+            ) : suggestions.length > 0 ? (
+              <div className="space-y-1">
+                <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Suggestions
+                </div>
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{suggestion}</span>
+                  </button>
+                ))}
+              </div>
+            ) : query.length >= 2 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">No locations found</p>
+              </div>
+            ) : null}
+          </div>
+        </Card>
       )}
-      
-      {showSuggestions && !isLoading && input.trim() && suggestions.length === 0 && (
-        <div className="absolute left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 px-4 py-2 text-gray-500">
-          No suggestions found
+
+      {/* Current search indicator */}
+      {searchParams.get("q") && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Searching for:</span>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {searchParams.get("q")}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSearch}
+              className="h-4 w-4 p-0 ml-1 hover:bg-background"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </Badge>
         </div>
       )}
-    </form>
+
+      {/* Click outside handler */}
+      {showSuggestions && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowSuggestions(false)}
+        />
+      )}
+    </div>
   );
 }
