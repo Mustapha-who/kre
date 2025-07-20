@@ -1,6 +1,8 @@
 // main/page.tsx
+import { Suspense } from "react";
 import { CardTitle, CardDescription } from "@/components/ui/card";
 import { getHouses, searchHouses } from "@/services/houseService";
+import { SearchBar } from "@/components/search-bar";
 import Link from "next/link";
 import { HouseSubmittedModal } from "@/components/house-submitted-modal";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -11,6 +13,26 @@ interface SearchParams {
 
 interface MainPageProps {
   searchParams: Promise<SearchParams>;
+}
+
+function SearchBarFallback() {
+  return (
+    <div className="w-full max-w-2xl mx-auto mb-8">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-muted-foreground animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          placeholder="Search by city, region, country, or postal code..."
+          className="w-full pl-10 pr-4 py-3 border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent opacity-50 text-foreground placeholder:text-muted-foreground"
+          disabled
+        />
+      </div>
+    </div>
+  );
 }
 
 export default async function MainPage({ 
@@ -42,6 +64,21 @@ export default async function MainPage({
     <>
       <HouseSubmittedModal />
       <main className="p-4 md:p-6 space-y-8">
+        {/* Enhanced Search Bar - Only on main page */}
+        <div className="w-full max-w-2xl mx-auto mb-8">
+          <div className="text-center mb-4">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
+              Find Your Perfect Home
+            </h1>
+            <p className="text-muted-foreground">
+              Discover rental properties in your desired location
+            </p>
+          </div>
+          <Suspense fallback={<SearchBarFallback />}>
+            <SearchBar />
+          </Suspense>
+        </div>
+
         {Object.keys(groupedHouses).length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
             No houses found for your search criteria
