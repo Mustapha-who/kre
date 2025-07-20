@@ -30,13 +30,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create new owner - combine firstName and lastName into name for database
+    // Create new owner with separate firstName and lastName
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const owner = await prisma.houseOwner.create({
       data: {
         email: email.toLowerCase().trim(),
-        name: `${firstName} ${lastName}`, // Combine for database storage
+        firstName,
+        lastName,
         phoneNumber,
         password: hashedPassword,
         totalProperties: 0

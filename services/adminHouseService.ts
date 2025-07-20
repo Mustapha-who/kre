@@ -10,7 +10,14 @@ export async function getAllHousesForAdmin() {
       datePosted: true,
       images: true,
       region: true,
-      owner: true,
+      owner: {
+        select: {
+          ownerId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        }
+      },
     },
     orderBy: [
       { verificationStatus: 'asc' }, // Unverified (false) first
@@ -18,7 +25,14 @@ export async function getAllHousesForAdmin() {
     ]
   });
 
-  return houses;
+  // Transform owner data to include name for backward compatibility
+  return houses.map(house => ({
+    ...house,
+    owner: {
+      ...house.owner,
+      name: `${house.owner.firstName} ${house.owner.lastName}`
+    }
+  }));
 }
 
 export async function updateHouseVerificationStatus(houseId: number, verificationStatus: boolean) {
@@ -35,7 +49,7 @@ export async function getUnverifiedHousesCount() {
 }
 
 export async function getHousesByVerificationStatus(verified: boolean = false) {
-  return await prisma.house.findMany({
+  const houses = await prisma.house.findMany({
     where: { verificationStatus: verified },
     select: {
       houseId: true,
@@ -45,8 +59,24 @@ export async function getHousesByVerificationStatus(verified: boolean = false) {
       datePosted: true,
       images: true,
       region: true,
-      owner: true,
+      owner: {
+        select: {
+          ownerId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        }
+      },
     },
     orderBy: { datePosted: 'desc' }
   });
+
+  // Transform owner data to include name for backward compatibility
+  return houses.map(house => ({
+    ...house,
+    owner: {
+      ...house.owner,
+      name: `${house.owner.firstName} ${house.owner.lastName}`
+    }
+  }));
 }

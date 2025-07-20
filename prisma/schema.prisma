@@ -9,87 +9,85 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-
-  
 }
 
-model Admin{
-  adminId    Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
+model Admin {
+  adminId  Int    @id @default(autoincrement())
+  email    String @unique
+  password String
 }
-
 
 model User {
-  userId       Int          @id @default(autoincrement())
-  email        String       @unique
-  password     String
-  firstName    String
-  lastName     String
+  userId    Int    @id @default(autoincrement())
+  email     String @unique
+  password  String
+  firstName String
+  lastName  String
 
-  savedHouses  SavedHouse[]
-  inquiries    Inquiry[]      // inquiries created by this user
-  reviews      Review[]       // reviews written by this user
+  savedHouses SavedHouse[]
+  inquiries   Inquiry[] // inquiries created by this user
+  reviews     Review[] // reviews written by this user
 }
 
 model HouseOwner {
-  ownerId            Int         @id @default(autoincrement())
-  email              String      @unique
-  password           String
-  name               String
-  phoneNumber        String
-  totalProperties    Int         @default(0)
+  ownerId         Int    @id @default(autoincrement())
+  email           String @unique
+  password        String
+  firstName       String
+  lastName        String
+  phoneNumber     String
+  totalProperties Int    @default(0)
 
-  houses             House[]
-  inquiriesReceived  Inquiry[]   // inquiries received by this owner
-  reviews            Review[] // reviews rating this owner
-  savedHouses  SavedHouse[]   
+  houses            House[]
+  inquiriesReceived Inquiry[] // inquiries received by this owner
+  reviews           Review[] // reviews rating this owner
+  savedHouses       SavedHouse[]
 }
 
 model House {
-  houseId           Int          @id @default(autoincrement())
-  title             String
-  description       String
-  monthlyRent       Float
-  numberOfRooms     Int
-  numberOfBathrooms Int
-  furnishingStatus  String
-  isAvailable       Boolean      @default(true)
-  verificationStatus Boolean     @default(false)
-  datePosted        DateTime     @default(now())
+  houseId            Int      @id @default(autoincrement())
+  title              String
+  description        String
+  monthlyRent        Float
+  numberOfRooms      Int
+  numberOfBathrooms  Int
+  furnishingStatus   String
+  isAvailable        Boolean  @default(true)
+  verificationStatus Boolean  @default(false)
+  datePosted         DateTime @default(now())
 
-  ownerId           Int
-  owner             HouseOwner   @relation(fields: [ownerId], references: [ownerId])
+  ownerId Int
+  owner   HouseOwner @relation(fields: [ownerId], references: [ownerId])
 
-  regionId          Int
-  region            Region      @relation(fields: [regionId], references: [regionId])
+  regionId Int
+  region   Region @relation(fields: [regionId], references: [regionId])
 
-  images            HouseImage[]
-  savedBy           SavedHouse[]
-  inquiries         Inquiry[]
-  reviews           Review[]
+  images    HouseImage[]
+  savedBy   SavedHouse[]
+  inquiries Inquiry[]
+  reviews   Review[]
 }
 
 model HouseImage {
-  imageId    Int     @id @default(autoincrement())
-  imageUrl   Bytes
+  imageId  Int   @id @default(autoincrement())
+  imageUrl Bytes
 
-  houseId    Int
-  house      House   @relation(fields: [houseId], references: [houseId])
+  houseId Int
+  house   House @relation(fields: [houseId], references: [houseId])
 }
 
 model Region {
-  regionId    Int      @id @default(autoincrement())
-  regionName  String
-  area        Float?
-  city        String
-  country     String
-  street      String?
-  postalCode  String?
-  latitude    Float?
-  longitude   Float?
+  regionId   Int     @id @default(autoincrement())
+  regionName String
+  area       Float?
+  city       String
+  country    String
+  street     String?
+  postalCode String?
+  latitude   Float?
+  longitude  Float?
 
-  houses      House[]
+  houses House[]
 }
 
 model Inquiry {
@@ -100,28 +98,28 @@ model Inquiry {
   responseMessage String?
   responseDate    DateTime?
 
-  userId          Int
-  user            User      @relation(fields: [userId], references: [userId])
+  userId Int
+  user   User @relation(fields: [userId], references: [userId])
 
-  houseId         Int
-  house           House     @relation(fields: [houseId], references: [houseId])
+  houseId Int
+  house   House @relation(fields: [houseId], references: [houseId])
 
-  ownerId         Int
-  owner           HouseOwner @relation(fields: [ownerId], references: [ownerId])
+  ownerId Int
+  owner   HouseOwner @relation(fields: [ownerId], references: [ownerId])
 }
 
 model SavedHouse {
-  savedId    Int      @id @default(autoincrement())
-  dateSaved  DateTime @default(now())
+  savedId   Int      @id @default(autoincrement())
+  dateSaved DateTime @default(now())
 
-  userId     Int?     // <-- Make nullable for either user or owner
-  user       User?    @relation(fields: [userId], references: [userId])
+  userId Int? // <-- Make nullable for either user or owner
+  user   User? @relation(fields: [userId], references: [userId])
 
-  ownerId    Int?     // <-- Add this for house owners
-  owner      HouseOwner? @relation(fields: [ownerId], references: [ownerId])
+  ownerId Int? // <-- Add this for house owners
+  owner   HouseOwner? @relation(fields: [ownerId], references: [ownerId])
 
-  houseId    Int
-  house      House    @relation(fields: [houseId], references: [houseId])
+  houseId Int
+  house   House @relation(fields: [houseId], references: [houseId])
 }
 
 model Review {
@@ -130,15 +128,12 @@ model Review {
   comment     String
   dateCreated DateTime @default(now())
 
-  userId      Int
-  user        User     @relation(fields: [userId], references: [userId])
+  userId Int
+  user   User @relation(fields: [userId], references: [userId])
 
-  houseId     Int
-  house       House    @relation(fields: [houseId], references: [houseId])
+  houseId Int
+  house   House @relation(fields: [houseId], references: [houseId])
 
-  ownerId     Int
-  owner       HouseOwner @relation(fields: [ownerId], references: [ownerId])
+  ownerId Int
+  owner   HouseOwner @relation(fields: [ownerId], references: [ownerId])
 }
-
-
-
