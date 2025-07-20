@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
         where: { ownerId: payload.ownerId },
         select: {
           ownerId: true,
-          name: true,
+          firstName: true,
+          lastName: true,
           email: true,
         },
       });
@@ -33,17 +34,12 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Owner not found" }, { status: 404 });
       }
 
-      // Split name into firstName and lastName for response
-      const nameParts = owner.name.split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
-
       return NextResponse.json({
         isHouseOwner: true,
         ownerId: owner.ownerId,
-        firstName: firstName,
-        lastName: lastName,
-        name: owner.name,
+        firstName: owner.firstName,
+        lastName: owner.lastName,
+        name: `${owner.firstName} ${owner.lastName}`,
         email: owner.email,
       });
     } else if (payload.userId) {
@@ -77,3 +73,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+  

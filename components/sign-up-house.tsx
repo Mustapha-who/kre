@@ -19,7 +19,8 @@ export function SignUpHouse({
   ...props
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -30,7 +31,7 @@ async function handleSubmit(e: React.FormEvent) {
   e.preventDefault();
   setError(null);
 
-  if (!email || !name || !phoneNumber || !password || !confirmPassword) {
+  if (!email || !firstName || !lastName || !phoneNumber || !password || !confirmPassword) {
     setError("All fields are required");
     return;
   }
@@ -45,7 +46,7 @@ async function handleSubmit(e: React.FormEvent) {
   try {
     const res = await fetch("/api/auth/sign-up-house", {
       method: "POST",
-      body: JSON.stringify({ email, name, phoneNumber, password }),
+      body: JSON.stringify({ email, firstName, lastName, phoneNumber, password }),
       headers: { "Content-Type": "application/json" },
     });
 
@@ -87,16 +88,29 @@ async function handleSubmit(e: React.FormEvent) {
                   required
                 />
               </div>
-              <div className="grid gap-3">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Full Name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid gap-3">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="phoneNumber">Phone Number</Label>
