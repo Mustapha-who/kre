@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AdminHouseDetailsModal } from "./admin-house-details-modal";
 
 // Helper function to safely convert image data to base64
 function imageToBase64(imageData: any): string {
@@ -50,6 +51,8 @@ export function AdminDashboard() {
   const [houses, setHouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedHouse, setSelectedHouse] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     isOpen: boolean;
     houseId: number | null;
@@ -132,6 +135,16 @@ export function AdminDashboard() {
       houseTitle: '',
       action: 'approve'
     });
+  };
+
+  const handleViewDetails = (house: any) => {
+    setSelectedHouse(house);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedHouse(null);
   };
 
   if (loading) {
@@ -272,7 +285,12 @@ export function AdminDashboard() {
                       >
                         <X className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="sm" className="h-8 px-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 px-2"
+                        onClick={() => handleViewDetails(house)}
+                      >
                         <Eye className="w-3 h-3" />
                       </Button>
                     </div>
@@ -306,7 +324,11 @@ export function AdminDashboard() {
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
               {verifiedHouses.slice(0, 8).map((house) => (
-                <Card key={house.houseId} className="overflow-hidden">
+                <Card 
+                  key={house.houseId} 
+                  className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => handleViewDetails(house)}
+                >
                   {house.images[0] && (
                     <div className="aspect-video relative overflow-hidden">
                       <img 
@@ -349,6 +371,13 @@ export function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* House Details Modal */}
+      <AdminHouseDetailsModal
+        house={selectedHouse}
+        isOpen={isDetailsModalOpen}
+        onClose={closeDetailsModal}
+      />
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmationDialog.isOpen} onOpenChange={cancelVerification}>
