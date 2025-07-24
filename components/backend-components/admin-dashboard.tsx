@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AdminHouseDetailsModal } from "./admin-house-details-modal";
+import { AdminHouseDetailsView } from "./admin-house-details-view";
 
 // Helper function to safely convert image data to base64
 function imageToBase64(imageData: any): string {
@@ -52,7 +52,6 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedHouse, setSelectedHouse] = useState<any>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     isOpen: boolean;
     houseId: number | null;
@@ -139,12 +138,46 @@ export function AdminDashboard() {
 
   const handleViewDetails = (house: any) => {
     setSelectedHouse(house);
-    setIsDetailsModalOpen(true);
   };
 
-  const closeDetailsModal = () => {
-    setIsDetailsModalOpen(false);
+  const handleBackToList = () => {
     setSelectedHouse(null);
+  };
+
+  const handleHouseAction = async (houseId: number, action: 'approve' | 'reject') => {
+    const status = action === 'approve';
+    setActionLoading(true);
+    
+    try {
+      const res = await fetch(`/api/admin/houses/${houseId}/verify`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verificationStatus: status }),
+      });
+
+      if (res.ok) {
+        // Update the houses list
+        setHouses(prev => 
+          prev.map(house => 
+            house.houseId === houseId 
+              ? { ...house, verificationStatus: status }
+              : house
+          )
+        );
+        
+        // Update selected house if it's the same one
+        if (selectedHouse?.houseId === houseId) {
+          setSelectedHouse(prev => ({
+            ...prev,
+            verificationStatus: status
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update verification status:', error);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading) {
@@ -158,6 +191,18 @@ export function AdminDashboard() {
   const unverifiedHouses = houses.filter(h => !h.verificationStatus);
   const verifiedHouses = houses.filter(h => h.verificationStatus);
   const totalHouses = houses.length;
+
+  // If a house is selected, show the details view
+  if (selectedHouse) {
+    return (
+      <AdminHouseDetailsView 
+        house={selectedHouse}
+        onBack={handleBackToList}
+        onHouseAction={handleHouseAction}
+        actionLoading={actionLoading}
+      />
+    );
+  }
 
   return (
     <>
@@ -371,13 +416,6 @@ export function AdminDashboard() {
           )}
         </div>
       </div>
-
-      {/* House Details Modal */}
-      <AdminHouseDetailsModal
-        house={selectedHouse}
-        isOpen={isDetailsModalOpen}
-        onClose={closeDetailsModal}
-      />
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmationDialog.isOpen} onOpenChange={cancelVerification}>
