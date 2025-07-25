@@ -114,7 +114,7 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
         {/* Left column - Images - smaller and more compact */}
         <div className="lg:col-span-2 space-y-4">
           {/* Main Image - reduced height */}
-          {house.images && house.images.length > 0 && (
+          {house.images && house.images.length > 0 ? (
             <div className="space-y-3">
               <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md">
                 <img
@@ -148,6 +148,16 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
                   )}
                 </div>
               )}
+            </div>
+          ) : (
+            // Placeholder for missing images
+            <div className="space-y-3">
+              <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md bg-muted flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <div className="text-4xl mb-2">🏠</div>
+                  <div>No Image Available</div>
+                </div>
+              </div>
             </div>
           )}
 
