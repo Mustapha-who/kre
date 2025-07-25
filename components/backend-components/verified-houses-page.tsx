@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,30 +39,16 @@ function imageToBase64(imageData: any): string {
   }
 }
 
-export function VerifiedHousesPage() {
-  const [houses, setHouses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+interface VerifiedHousesPageProps {
+  houses: any[];
+}
+
+export function VerifiedHousesPage({ houses: initialHouses }: VerifiedHousesPageProps) {
+  const [houses] = useState(initialHouses);
   const [selectedHouse, setSelectedHouse] = useState<any>(null);
 
-  useEffect(() => {
-    fetchVerifiedHouses();
-  }, []);
-
-  const fetchVerifiedHouses = async () => {
-    try {
-      const res = await fetch('/api/admin/houses/verified');
-      if (res.ok) {
-        const data = await res.json();
-        setHouses(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch verified houses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleViewDetails = (house: any) => {
+    // Just use the house data we already have
     setSelectedHouse(house);
   };
 
@@ -75,14 +61,6 @@ export function VerifiedHousesPage() {
     // or disable these actions since houses are already verified
     console.log('House action not applicable for verified houses');
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   // If a house is selected, show the details view
   if (selectedHouse) {
@@ -130,21 +108,16 @@ export function VerifiedHousesPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {houses.map((house) => (
             <Card key={house.houseId} className="overflow-hidden">
-              {house.images[0] && (
-                <div className="aspect-video relative overflow-hidden">
-                  <img 
-                    src={imageToBase64(house.images[0].imageUrl)}
-                    alt={house.title}
-                    className="object-cover w-full h-full"
-                  />
-                  <Badge 
-                    variant="default" 
-                    className="absolute top-2 right-2 bg-green-100 text-green-800"
-                  >
-                    Verified
-                  </Badge>
-                </div>
-              )}
+              {/* Placeholder for image */}
+              <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
+                <div className="text-muted-foreground text-sm">No Image</div>
+                <Badge 
+                  variant="default" 
+                  className="absolute top-2 right-2 bg-green-100 text-green-800"
+                >
+                  Verified
+                </Badge>
+              </div>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg line-clamp-1">{house.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">

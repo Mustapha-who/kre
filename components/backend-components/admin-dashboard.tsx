@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AdminHouseDetailsView } from "./admin-house-details-view";
+import { verifyHouse } from "@/lib/actions/admin-actions";
 
 // Helper function to safely convert image data to base64
 function imageToBase64(imageData: any): string {
@@ -47,10 +48,13 @@ function imageToBase64(imageData: any): string {
   }
 }
 
-export function AdminDashboard() {
-  const [houses, setHouses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+interface AdminDashboardProps {
+  houses: any[];
+}
+
+export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
+  const [houses, setHouses] = useState(initialHouses);
+  const [isPending, startTransition] = useTransition();
   const [selectedHouse, setSelectedHouse] = useState<any>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     isOpen: boolean;
@@ -63,24 +67,6 @@ export function AdminDashboard() {
     houseTitle: '',
     action: 'approve'
   });
-
-  useEffect(() => {
-    fetchHouses();
-  }, []);
-
-  const fetchHouses = async () => {
-    try {
-      const res = await fetch('/api/admin/houses');
-      if (res.ok) {
-        const data = await res.json();
-        setHouses(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch houses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleVerifyHouse = async (houseId: number, status: boolean) => {
     const house = houses.find(h => h.houseId === houseId);
@@ -95,18 +81,14 @@ export function AdminDashboard() {
   const confirmVerifyHouse = async () => {
     if (!confirmationDialog.houseId) return;
     
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/admin/houses/${confirmationDialog.houseId}/verify`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          verificationStatus: confirmationDialog.action === 'approve' 
-        }),
-      });
+    startTransition(async () => {
+      const result = await verifyHouse(
+        confirmationDialog.houseId!, 
+        confirmationDialog.action === 'approve'
+      );
 
-      if (res.ok) {
-        setHouses(prev => 
+      if (result.success) {
+        setHouses((prev: any[]) => 
           prev.map(house => 
             house.houseId === confirmationDialog.houseId 
               ? { ...house, verificationStatus: confirmationDialog.action === 'approve' }
@@ -114,17 +96,14 @@ export function AdminDashboard() {
           )
         );
       }
-    } catch (error) {
-      console.error('Failed to update verification status:', error);
-    } finally {
-      setActionLoading(false);
+      
       setConfirmationDialog({
         isOpen: false,
         houseId: null,
         houseTitle: '',
         action: 'approve'
       });
-    }
+    });
   };
 
   const cancelVerification = () => {
@@ -137,6 +116,7 @@ export function AdminDashboard() {
   };
 
   const handleViewDetails = (house: any) => {
+    // Just use the house data we already have instead of fetching detailed data
     setSelectedHouse(house);
   };
 
@@ -146,18 +126,13 @@ export function AdminDashboard() {
 
   const handleHouseAction = async (houseId: number, action: 'approve' | 'reject') => {
     const status = action === 'approve';
-    setActionLoading(true);
     
-    try {
-      const res = await fetch(`/api/admin/houses/${houseId}/verify`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verificationStatus: status }),
-      });
-
-      if (res.ok) {
-        // Update the houses list
-        setHouses(prev => 
+    startTransition(async () => {
+      const result = await verifyHouse(houseId, status);
+      
+      if (result.success) {
+        // Update local state immediately for better UX
+        setHouses((prev: any[]) => 
           prev.map(house => 
             house.houseId === houseId 
               ? { ...house, verificationStatus: status }
@@ -165,28 +140,17 @@ export function AdminDashboard() {
           )
         );
         
-        // Update selected house if it's the same one
         if (selectedHouse?.houseId === houseId) {
-          setSelectedHouse(prev => ({
+          setSelectedHouse((prev: any) => ({
             ...prev,
             verificationStatus: status
           }));
         }
+      } else {
+        console.error('Failed to update verification status');
       }
-    } catch (error) {
-      console.error('Failed to update verification status:', error);
-    } finally {
-      setActionLoading(false);
-    }
+    });
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   const unverifiedHouses = houses.filter(h => !h.verificationStatus);
   const verifiedHouses = houses.filter(h => h.verificationStatus);
@@ -199,7 +163,7 @@ export function AdminDashboard() {
         house={selectedHouse}
         onBack={handleBackToList}
         onHouseAction={handleHouseAction}
-        actionLoading={actionLoading}
+        actionLoading={isPending}
       />
     );
   }
@@ -271,21 +235,16 @@ export function AdminDashboard() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {unverifiedHouses.map((house) => (
                 <Card key={house.houseId} className="overflow-hidden">
-                  {house.images[0] && (
-                    <div className="aspect-video relative overflow-hidden">
-                      <img 
-                        src={imageToBase64(house.images[0].imageUrl)}
-                        alt={house.title}
-                        className="object-cover w-full h-full"
-                      />
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
-                      >
-                        Pending
-                      </Badge>
-                    </div>
-                  )}
+                  {/* Placeholder for image */}
+                  <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
+                    <div className="text-muted-foreground text-sm">No Image</div>
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
+                    >
+                      Pending
+                    </Badge>
+                  </div>
                   <CardHeader className="pb-2 pt-3">
                     <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
                     <p className="text-xs text-muted-foreground line-clamp-1">
@@ -316,7 +275,7 @@ export function AdminDashboard() {
                         size="sm"
                         onClick={() => handleVerifyHouse(house.houseId, true)}
                         className="flex-1 h-8 text-xs"
-                        disabled={actionLoading}
+                        disabled={isPending}
                       >
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Approve
@@ -326,7 +285,7 @@ export function AdminDashboard() {
                         size="sm" 
                         className="h-8 px-2"
                         onClick={() => handleVerifyHouse(house.houseId, false)}
-                        disabled={actionLoading}
+                        disabled={isPending}
                       >
                         <X className="w-3 h-3" />
                       </Button>
@@ -374,21 +333,16 @@ export function AdminDashboard() {
                   className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => handleViewDetails(house)}
                 >
-                  {house.images[0] && (
-                    <div className="aspect-video relative overflow-hidden">
-                      <img 
-                        src={imageToBase64(house.images[0].imageUrl)}
-                        alt={house.title}
-                        className="object-cover w-full h-full"
-                      />
-                      <Badge 
-                        variant="default" 
-                        className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
-                      >
-                        Verified
-                      </Badge>
-                    </div>
-                  )}
+                  {/* Placeholder for image */}
+                  <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
+                    <div className="text-muted-foreground text-sm">No Image</div>
+                    <Badge 
+                      variant="default" 
+                      className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
+                    >
+                      Verified
+                    </Badge>
+                  </div>
                   <CardHeader className="pb-1 pt-2">
                     <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
                     <p className="text-xs text-muted-foreground line-clamp-1">
@@ -439,16 +393,16 @@ export function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={cancelVerification} disabled={actionLoading}>
+            <Button variant="outline" onClick={cancelVerification} disabled={isPending}>
               Cancel
             </Button>
             <Button
               variant={confirmationDialog.action === 'approve' ? 'default' : 'destructive'}
               onClick={confirmVerifyHouse}
-              disabled={actionLoading}
+              disabled={isPending}
               className="flex items-center gap-2"
             >
-              {actionLoading ? (
+              {isPending ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
               ) : confirmationDialog.action === 'approve' ? (
                 <CheckCircle className="w-4 h-4" />

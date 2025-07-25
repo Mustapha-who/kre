@@ -1,4 +1,7 @@
 import { AdminDashboard } from "@/components/backend-components/admin-dashboard";
-export default function AdminPage() {
-  return <AdminDashboard />;
+import { getAllHousesForAdmin } from "@/lib/actions/admin-actions";
+
+export default async function AdminPage() {
+  const houses = await getAllHousesForAdmin();
+  return <AdminDashboard houses={houses} />;
 }
