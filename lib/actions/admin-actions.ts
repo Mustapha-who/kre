@@ -35,6 +35,11 @@ export async function getHouseDetailsForAdmin(houseId: number) {
         isAvailable: true,
         verificationStatus: true,
         datePosted: true,
+        images: { // Fetch all image IDs for the detail view
+          select: {
+            imageId: true,
+          }
+        },
         region: {
           select: {
             regionId: true,
@@ -66,7 +71,6 @@ export async function getHouseDetailsForAdmin(houseId: number) {
 
     return {
       ...house,
-      images: [], // Empty images array
       owner: {
         ...house.owner,
         name: `${house.owner.firstName} ${house.owner.lastName}`
@@ -80,6 +84,8 @@ export async function getHouseDetailsForAdmin(houseId: number) {
 
 export async function getAllHousesForAdmin() {
   try {
+    
+    
     const houses = await prisma.house.findMany({
       select: {
         houseId: true,
@@ -101,16 +107,25 @@ export async function getAllHousesForAdmin() {
             email: true,
           }
         },
+        // Get only the ID of the first image
+        images: {
+          select: {
+            imageId: true,
+          },
+          take: 1,
+        },
       },
       orderBy: [
         { verificationStatus: 'asc' }, // Unverified first
         { datePosted: 'desc' }
-      ]
+      ],
+      take: 50 // Keep a reasonable limit
     });
+
+    
 
     return houses.map(house => ({
       ...house,
-      images: [], // Empty images array
       owner: {
         ...house.owner,
         name: `${house.owner.firstName} ${house.owner.lastName}`
@@ -124,6 +139,8 @@ export async function getAllHousesForAdmin() {
 
 export async function getVerifiedHouses() {
   try {
+    
+    
     const houses = await prisma.house.findMany({
       where: { verificationStatus: true },
       select: {
@@ -146,13 +163,22 @@ export async function getVerifiedHouses() {
             email: true,
           }
         },
+        // Get only the ID of the first image
+        images: {
+          select: {
+            imageId: true,
+          },
+          take: 1,
+        },
       },
-      orderBy: { datePosted: 'desc' }
+      orderBy: { datePosted: 'desc' },
+      take: 50 // Keep a reasonable limit
     });
+
+    
 
     return houses.map(house => ({
       ...house,
-      images: [], // Empty images array
       owner: {
         ...house.owner,
         name: `${house.owner.firstName} ${house.owner.lastName}`
@@ -163,4 +189,29 @@ export async function getVerifiedHouses() {
     throw new Error("Failed to fetch verified houses");
   }
 }
-    
+
+// This function is no longer needed for the admin dashboard but can be kept
+export async function getHouseImage(houseId: number) {
+  try {
+    const image = await prisma.houseImage.findFirst({
+      where: { houseId },
+      select: {
+        imageId: true,
+        imageUrl: true,
+      },
+      take: 1
+    });
+
+    if (!image) {
+      return null;
+    }
+
+    return {
+      imageId: image.imageId,
+      imageUrl: image.imageUrl
+    };
+  } catch (error) {
+    console.error(`Error fetching image for house ${houseId}:`, error);
+    return null;
+  }
+}

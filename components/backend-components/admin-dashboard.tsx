@@ -14,39 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AdminHouseDetailsView } from "./admin-house-details-view";
-import { verifyHouse } from "@/lib/actions/admin-actions";
-
-// Helper function to safely convert image data to base64
-function imageToBase64(imageData: any): string {
-  if (!imageData) return '/placeholder-house.jpg';
-  
-  try {
-    // If it's already a string (URL or base64), return as is
-    if (typeof imageData === 'string') {
-      return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
-    }
-    
-    // Handle object with numeric keys (like {0: 255, 1: 216, ...})
-    if (imageData && typeof imageData === 'object') {
-      const keys = Object.keys(imageData);
-      if (keys.every(key => !isNaN(Number(key)))) {
-        const dataArray = keys.map(key => imageData[key]);
-        const uint8Array = new Uint8Array(dataArray);
-        let binary = '';
-        for (let i = 0; i < uint8Array.length; i++) {
-          binary += String.fromCharCode(uint8Array[i]);
-        }
-        const base64 = btoa(binary);
-        return `data:image/jpeg;base64,${base64}`;
-      }
-    }
-    
-    return '/placeholder-house.jpg';
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    return '/placeholder-house.jpg';
-  }
-}
+import { verifyHouse, getHouseDetailsForAdmin } from "@/lib/actions/admin-actions";
 
 interface AdminDashboardProps {
   houses: any[];
@@ -56,6 +24,7 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
   const [houses, setHouses] = useState(initialHouses);
   const [isPending, startTransition] = useTransition();
   const [selectedHouse, setSelectedHouse] = useState<any>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     isOpen: boolean;
     houseId: number | null;
@@ -115,9 +84,17 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
     });
   };
 
-  const handleViewDetails = (house: any) => {
-    // Just use the house data we already have instead of fetching detailed data
-    setSelectedHouse(house);
+  const handleViewDetails = async (house: any) => {
+    setIsLoadingDetails(true);
+    try {
+      const detailedHouse = await getHouseDetailsForAdmin(house.houseId);
+      setSelectedHouse(detailedHouse);
+    } catch (error) {
+      console.error("Failed to fetch house details", error);
+      // Optionally, show an error to the user
+    } finally {
+      setIsLoadingDetails(false);
+    }
   };
 
   const handleBackToList = () => {
@@ -155,6 +132,16 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
   const unverifiedHouses = houses.filter(h => !h.verificationStatus);
   const verifiedHouses = houses.filter(h => h.verificationStatus);
   const totalHouses = houses.length;
+
+  // Add a loading state for the details view
+  if (isLoadingDetails) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <span className="ml-4 text-muted-foreground">Loading Details...</span>
+      </div>
+    );
+  }
 
   // If a house is selected, show the details view
   if (selectedHouse) {
@@ -235,16 +222,35 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {unverifiedHouses.map((house) => (
                 <Card key={house.houseId} className="overflow-hidden">
-                  {/* Placeholder for image */}
-                  <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
-                    <div className="text-muted-foreground text-sm">No Image</div>
-                    <Badge 
-                      variant="secondary" 
-                      className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
-                    >
-                      Pending
-                    </Badge>
-                  </div>
+                  {/* Show image directly from API or placeholder */}
+                  {house.images && house.images.length > 0 ? (
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={`/api/image/${house.images[0].imageId}`}
+                        alt={house.title}
+                        className="object-cover w-full h-full"
+                      />
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
+                      >
+                        Pending
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <div className="text-2xl mb-1">🏠</div>
+                        <div className="text-xs">No Image</div>
+                      </div>
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs"
+                      >
+                        Pending
+                      </Badge>
+                    </div>
+                  )}
                   <CardHeader className="pb-2 pt-3">
                     <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
                     <p className="text-xs text-muted-foreground line-clamp-1">
@@ -333,16 +339,35 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
                   className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => handleViewDetails(house)}
                 >
-                  {/* Placeholder for image */}
-                  <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
-                    <div className="text-muted-foreground text-sm">No Image</div>
-                    <Badge 
-                      variant="default" 
-                      className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
-                    >
-                      Verified
-                    </Badge>
-                  </div>
+                  {/* Show image directly from API or placeholder */}
+                  {house.images && house.images.length > 0 ? (
+                    <div className="aspect-video relative overflow-hidden">
+                      <img 
+                        src={`/api/image/${house.images[0].imageId}`}
+                        alt={house.title}
+                        className="object-cover w-full h-full"
+                      />
+                      <Badge 
+                        variant="default" 
+                        className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
+                      >
+                        Verified
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+                      <div className="text-center text-green-700">
+                        <div className="text-2xl mb-1">✅</div>
+                        <div className="text-xs">No Image</div>
+                      </div>
+                      <Badge 
+                        variant="default" 
+                        className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs"
+                      >
+                        Verified
+                      </Badge>
+                    </div>
+                  )}
                   <CardHeader className="pb-1 pt-2">
                     <CardTitle className="text-sm line-clamp-1">{house.title}</CardTitle>
                     <p className="text-xs text-muted-foreground line-clamp-1">
