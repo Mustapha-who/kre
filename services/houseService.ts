@@ -37,11 +37,20 @@ export async function getHouses() {
     },
   });
 
-  return houses.map(house => ({
+  const processedHouses = houses.map(house => ({
     ...house,
     isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
     savedBy: undefined,
   }));
+
+  // Sort to show favorite houses first
+  processedHouses.sort((a, b) => {
+    if (a.isDefaultFavorite && !b.isDefaultFavorite) return -1;
+    if (!a.isDefaultFavorite && b.isDefaultFavorite) return 1;
+    return 0; // Keep original order for houses with same favorite status
+  });
+
+  return processedHouses;
 }
 
 export async function getHouseById(houseId: number) {
@@ -125,11 +134,20 @@ export async function searchHouses(searchTerm: string) {
     },
   });
 
-  return houses.map(house => ({
+  const processedHouses = houses.map(house => ({
     ...house,
     isDefaultFavorite: house.savedBy && house.savedBy.length > 0,
     savedBy: undefined,
   }));
+
+  // Sort to show favorite houses first
+  processedHouses.sort((a, b) => {
+    if (a.isDefaultFavorite && !b.isDefaultFavorite) return -1;
+    if (!a.isDefaultFavorite && b.isDefaultFavorite) return 1;
+    return 0; // Keep original order for houses with same favorite status
+  });
+
+  return processedHouses;
 }
 
 export async function getFavoriteHouses() {

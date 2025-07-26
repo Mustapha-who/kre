@@ -1,69 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Corrected named import
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// Helper to get userId (for User) or ownerId (for HouseOwner) from JWT cookie
-function getUserOrOwnerIdFromRequest(req: NextRequest): { userId?: number; ownerId?: number } | null {
+// Helper to get user/owner ID from token
+async function getAuthPayload(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
   if (!token) return null;
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId?: number; ownerId?: number };
-    if (payload.userId) return { userId: payload.userId };
-    if (payload.ownerId) return { ownerId: payload.ownerId };
-    return null;
+    return jwt.verify(token, JWT_SECRET) as {
+      userId?: number;
+      ownerId?: number;
+      email: string;
+    };
   } catch {
     return null;
   }
 }
 
+// Add a house to favorites
 export async function POST(req: NextRequest) {
+  const payload = await getAuthPayload(req);
+  if (!payload) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   try {
-    const ids = getUserOrOwnerIdFromRequest(req);
-    if (!ids || (!ids.userId && !ids.ownerId)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
     const { houseId } = await req.json();
     if (!houseId) {
-      return NextResponse.json({ error: "Missing houseId" }, { status: 400 });
+      return NextResponse.json({ error: "House ID is required" }, { status: 400 });
     }
-    // Use userId if present, otherwise ownerId
-    const userField = ids.userId ? { userId: ids.userId } : { ownerId: ids.ownerId };
 
-    // Prevent duplicate favorites
-    const existing = await prisma.savedHouse.findFirst({
-      where: { ...userField, houseId }
-    });
-    if (existing) {
-      return NextResponse.json({ success: true, alreadySaved: true });
-    }
-    await prisma.savedHouse.create({
+    const savedHouse = await prisma.savedHouse.create({
       data: {
-        ...userField,
         houseId,
-      }
+        userId: payload.userId,
+        ownerId: payload.ownerId,
+      },
     });
-    return NextResponse.json({ success: true });
+
+    return NextResponse.json({ success: true, savedHouse });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to save favorite" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to save house" }, { status: 500 });
   }
 }
 
+// Remove a house from favorites
 export async function DELETE(req: NextRequest) {
+  const payload = await getAuthPayload(req);
+  if (!payload) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
   try {
-    const ids = getUserOrOwnerIdFromRequest(req);
-    if (!ids || (!ids.userId && !ids.ownerId)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
     const { houseId } = await req.json();
     if (!houseId) {
-      return NextResponse.json({ error: "Missing houseId" }, { status: 400 });
+      return NextResponse.json({ error: "House ID is required" }, { status: 400 });
     }
-    const userField = ids.userId ? { userId: ids.userId } : { ownerId: ids.ownerId };
-    await prisma.savedHouse.deleteMany({
-      where: { ...userField, houseId }
+
+    // Construct where clause based on whether it's a user or owner
+    const whereClause = {
+      houseId,
+      ...(payload.userId && { userId: payload.userId }),
+      ...(payload.ownerId && { ownerId: payload.ownerId }),
+    };
+
+    // Find the specific record to delete
+    const savedHouse = await prisma.savedHouse.findFirst({
+      where: whereClause,
     });
+
+    if (!savedHouse) {
+      return NextResponse.json({ error: "Favorite not found" }, { status: 404 });
+    }
+
+    await prisma.savedHouse.delete({
+      where: {
+        savedId: savedHouse.savedId,
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Failed to remove favorite" }, { status: 500 });
