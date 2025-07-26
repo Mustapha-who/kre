@@ -1,6 +1,5 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,36 +22,6 @@ interface AdminHouseDetailsViewProps {
   onBack: () => void;
   onHouseAction: (houseId: number, action: 'approve' | 'reject') => void;
   actionLoading: boolean;
-}
-
-// Helper function to safely convert image data to base64
-function imageToBase64(imageData: any): string {
-  if (!imageData) return '/placeholder-house.jpg';
-  
-  try {
-    if (typeof imageData === 'string') {
-      return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
-    }
-    
-    if (imageData && typeof imageData === 'object') {
-      const keys = Object.keys(imageData);
-      if (keys.every(key => !isNaN(Number(key)))) {
-        const dataArray = keys.map(key => imageData[key]);
-        const uint8Array = new Uint8Array(dataArray);
-        let binary = '';
-        for (let i = 0; i < uint8Array.length; i++) {
-          binary += String.fromCharCode(uint8Array[i]);
-        }
-        const base64 = btoa(binary);
-        return `data:image/jpeg;base64,${base64}`;
-      }
-    }
-    
-    return '/placeholder-house.jpg';
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    return '/placeholder-house.jpg';
-  }
 }
 
 export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoading }: AdminHouseDetailsViewProps) {
@@ -118,7 +87,7 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
             <div className="space-y-3">
               <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md">
                 <img
-                  src={imageToBase64(house.images[0].imageUrl)}
+                  src={`/api/image/${house.images[0].imageId}`}
                   alt={house.title}
                   className="w-full h-full object-cover"
                 />
@@ -134,7 +103,7 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
                     {house.images.slice(1, 7).map((image: any, index: number) => (
                       <div key={index} className="aspect-square overflow-hidden rounded border">
                         <img
-                          src={imageToBase64(image.imageUrl)}
+                          src={`/api/image/${image.imageId}`}
                           alt={`${house.title} - Image ${index + 2}`}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
@@ -309,3 +278,4 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
     </div>
   );
 }
+            

@@ -7,38 +7,6 @@ import { CheckCircle, Eye, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AdminHouseDetailsView } from "./admin-house-details-view";
 
-// Helper function to safely convert image data to base64
-function imageToBase64(imageData: any): string {
-  if (!imageData) return '/placeholder-house.jpg';
-  
-  try {
-    // If it's already a string (URL or base64), return as is
-    if (typeof imageData === 'string') {
-      return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
-    }
-    
-    // Handle object with numeric keys (like {0: 255, 1: 216, ...})
-    if (imageData && typeof imageData === 'object') {
-      const keys = Object.keys(imageData);
-      if (keys.every(key => !isNaN(Number(key)))) {
-        const dataArray = keys.map(key => imageData[key]);
-        const uint8Array = new Uint8Array(dataArray);
-        let binary = '';
-        for (let i = 0; i < uint8Array.length; i++) {
-          binary += String.fromCharCode(uint8Array[i]);
-        }
-        const base64 = btoa(binary);
-        return `data:image/jpeg;base64,${base64}`;
-      }
-    }
-    
-    return '/placeholder-house.jpg';
-  } catch (error) {
-    console.error('Error converting image to base64:', error);
-    return '/placeholder-house.jpg';
-  }
-}
-
 interface VerifiedHousesPageProps {
   houses: any[];
 }
@@ -108,16 +76,35 @@ export function VerifiedHousesPage({ houses: initialHouses }: VerifiedHousesPage
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {houses.map((house) => (
             <Card key={house.houseId} className="overflow-hidden">
-              {/* Placeholder for image */}
-              <div className="aspect-video relative overflow-hidden bg-muted flex items-center justify-center">
-                <div className="text-muted-foreground text-sm">No Image</div>
-                <Badge 
-                  variant="default" 
-                  className="absolute top-2 right-2 bg-green-100 text-green-800"
-                >
-                  Verified
-                </Badge>
-              </div>
+              {/* Show image directly from API or placeholder */}
+              {house.images && house.images.length > 0 ? (
+                <div className="aspect-video relative overflow-hidden">
+                  <img 
+                    src={`/api/image/${house.images[0].imageId}`}
+                    alt={house.title}
+                    className="object-cover w-full h-full"
+                  />
+                  <Badge 
+                    variant="default" 
+                    className="absolute top-2 right-2 bg-green-100 text-green-800"
+                  >
+                    Verified
+                  </Badge>
+                </div>
+              ) : (
+                <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+                  <div className="text-center text-green-700">
+                    <div className="text-3xl mb-2">✅</div>
+                    <div className="text-sm font-medium">Verified Property</div>
+                  </div>
+                  <Badge 
+                    variant="default" 
+                    className="absolute top-2 right-2 bg-green-100 text-green-800"
+                  >
+                    Verified
+                  </Badge>
+                </div>
+              )}
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg line-clamp-1">{house.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -162,3 +149,5 @@ export function VerifiedHousesPage({ houses: initialHouses }: VerifiedHousesPage
     </div>
   );
 }
+                   
+               
