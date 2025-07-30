@@ -17,6 +17,7 @@ model Admin {
   password String
 }
 
+
 model User {
   userId    Int    @id @default(autoincrement())
   email     String @unique
