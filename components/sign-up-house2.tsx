@@ -31,20 +31,16 @@ export function SignUpHouse2() {
     street: "",
     latitude: "",
     longitude: "",
-    images: [null, null, null, null, null] as (File | null)[], // 0: main, 1-4: small
+    images: new Array(15).fill(null) as (File | null)[], // 0: main, 1-4: mini required, 5-14: optional
   });
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [galleryHover, setGalleryHover] = useState<number | null>(null)
-  const fileInputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const [visibleOptionalImages, setVisibleOptionalImages] = useState(1) // Start with 6th image visible
+  
+  const fileInputRefs = Array.from({ length: 15 }, () => useRef<HTMLInputElement>(null));
 
   // Get ownerId from URL params (/sign-up-house/[ownerId])
   const ownerId =
@@ -67,6 +63,12 @@ export function SignUpHouse2() {
       setForm(f => {
         const newImages = [...f.images];
         newImages[idx] = files[0] || null;
+        
+        // If this is an optional image (index 5+) and it's the last visible one, show next one
+        if (idx >= 5 && files[0] && idx === 4 + visibleOptionalImages && visibleOptionalImages < 10) {
+          setVisibleOptionalImages(prev => prev + 1);
+        }
+        
         return { ...f, images: newImages };
       });
     } else {
@@ -126,17 +128,11 @@ export function SignUpHouse2() {
     }
   }
 
-  // Generate previews for all images, always up to 5 (main + 4 small)
-  const [imagePreviews, setImagePreviews] = useState<string[]>(["", "", "", "", ""]);
+  // Generate previews for all 15 images
+  const [imagePreviews, setImagePreviews] = useState<string[]>(new Array(15).fill(""));
   useEffect(() => {
     const urls = form.images.map(file => file ? URL.createObjectURL(file) : "");
-    setImagePreviews([
-      urls[0] || "",
-      urls[1] || "",
-      urls[2] || "",
-      urls[3] || "",
-      urls[4] || "",
-    ]);
+    setImagePreviews(urls);
     return () => {
       urls.forEach(url => url && URL.revokeObjectURL(url));
     };
@@ -156,43 +152,47 @@ export function SignUpHouse2() {
           Owner information is missing. Please complete the owner registration first.
         </div>
       )}
-      {/* Images Gallery */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
-        {/* Main image */}
-        <div
-          className="relative rounded-lg overflow-hidden h-64 md:h-[400px] md:w-2/3 group border bg-muted flex items-center justify-center"
-          onMouseEnter={() => setGalleryHover(-1)}
-          onMouseLeave={() => setGalleryHover(null)}
-          onClick={() => handleGalleryClick(0)}
-          style={{ cursor: "pointer" }}
-        >
-          {renderImage(
-            imagePreviews[0],
-            "Featured",
-            "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          ) || (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <ImageIcon className="w-12 h-12" />
+      
+      {/* Required Images Gallery */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-3">Required Images</h3>
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Main image */}
+          <div
+            className="relative rounded-lg overflow-hidden h-64 md:h-[400px] md:w-2/3 group border bg-muted flex items-center justify-center"
+            onMouseEnter={() => setGalleryHover(-1)}
+            onMouseLeave={() => setGalleryHover(null)}
+            onClick={() => handleGalleryClick(0)}
+            style={{ cursor: "pointer" }}
+          >
+            {renderImage(
+              imagePreviews[0],
+              "Featured",
+              "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            ) || (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <ImageIcon className="w-12 h-12" />
+                <span className="ml-2 text-sm">Main Image (Required)</span>
+              </div>
+            )}
+            <input
+              ref={fileInputRefs[0]}
+              id="main-image"
+              name="images"
+              type="file"
+              accept="image/*"
+              onChange={e => handleChange(e, 0)}
+              className="hidden"
+            />
+            <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === -1 ? "opacity-100" : "opacity-0"}`}>
+              <ImageIcon className="w-10 h-10 text-white mb-2" />
+              <span className="text-white font-semibold">Click to add/change main image</span>
             </div>
-          )}
-          <input
-            ref={fileInputRefs[0]}
-            id="main-image"
-            name="images"
-            type="file"
-            accept="image/*"
-            onChange={e => handleChange(e, 0)}
-            className="hidden"
-          />
-          <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === -1 ? "opacity-100" : "opacity-0"}`}>
-            <ImageIcon className="w-10 h-10 text-white mb-2" />
-            <span className="text-white font-semibold">Click or drag to add/change images</span>
           </div>
-        </div>
-        {/* 2x2 grid for small images */}
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 md:w-[350px] h-64 md:h-[400px]">
-          {[1, 2, 3, 4].map((idx) =>
-            imagePreviews[idx] ? (
+          
+          {/* 2x2 grid for required mini images */}
+          <div className="grid grid-cols-2 grid-rows-2 gap-2 md:w-[350px] h-64 md:h-[400px]">
+            {[1, 2, 3, 4].map((idx) => (
               <div
                 key={idx}
                 className="relative rounded-lg overflow-hidden h-full group border bg-muted flex items-center justify-center"
@@ -201,13 +201,16 @@ export function SignUpHouse2() {
                 onClick={() => handleGalleryClick(idx)}
                 style={{ cursor: "pointer" }}
               >
-                {renderImage(
-                  imagePreviews[idx],
-                  `House image ${idx + 1}`,
-                  "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                ) || (
+                {imagePreviews[idx] ? (
+                  renderImage(
+                    imagePreviews[idx],
+                    `House image ${idx + 1}`,
+                    "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  )
+                ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <ImageIcon className="w-8 h-8" />
+                    <Plus className="w-8 h-8" />
+                    <span className="ml-1 text-xs">Required</span>
                   </div>
                 )}
                 <input
@@ -221,17 +224,42 @@ export function SignUpHouse2() {
                 />
                 <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === idx ? "opacity-100" : "opacity-0"}`}>
                   <ImageIcon className="w-8 h-8 text-white mb-1" />
-                  <span className="text-xs text-white">Change image</span>
+                  <span className="text-xs text-white text-center">
+                    {imagePreviews[idx] ? 'Change image' : 'Add image (Required)'}
+                  </span>
                 </div>
               </div>
-            ) : (
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Optional Additional Images */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-3">Additional Images (Optional)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {Array.from({ length: visibleOptionalImages }, (_, i) => {
+            const idx = i + 5; // Start from index 5
+            return (
               <div
                 key={idx}
-                className="relative rounded-lg overflow-hidden h-full flex items-center justify-center border border-dashed bg-muted cursor-pointer group hover:bg-primary/10 transition"
-                onClick={() => handleGalleryClick(idx)}
+                className="relative rounded-lg overflow-hidden h-32 group border bg-muted flex items-center justify-center"
                 onMouseEnter={() => setGalleryHover(idx)}
                 onMouseLeave={() => setGalleryHover(null)}
+                onClick={() => handleGalleryClick(idx)}
+                style={{ cursor: "pointer" }}
               >
+                {imagePreviews[idx] ? (
+                  renderImage(
+                    imagePreviews[idx],
+                    `Additional image ${i + 1}`,
+                    "w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  )
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <Plus className="w-6 h-6" />
+                  </div>
+                )}
                 <input
                   ref={fileInputRefs[idx]}
                   id={`image-${idx}`}
@@ -241,14 +269,21 @@ export function SignUpHouse2() {
                   onChange={e => handleChange(e, idx)}
                   className="hidden"
                 />
-                <Plus className="w-8 h-8 text-gray-400 group-hover:text-primary" />
                 <div className={`absolute inset-0 flex flex-col items-center justify-center transition bg-black/40 ${galleryHover === idx ? "opacity-100" : "opacity-0"}`}>
-                  <span className="text-xs text-white">Add image</span>
+                  <ImageIcon className="w-6 h-6 text-white mb-1" />
+                  <span className="text-xs text-white text-center">
+                    {imagePreviews[idx] ? 'Change' : `Add image ${i + 1}`}
+                  </span>
                 </div>
               </div>
-            )
-          )}
+            );
+          })}
         </div>
+        {visibleOptionalImages < 10 && (
+          <p className="text-sm text-muted-foreground mt-2">
+            {15 - 5 - visibleOptionalImages} more optional images can be added
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>
