@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PhotoGallery } from "@/components/photo-gallery";
 import { 
   ArrowLeft,
   MapPin, 
@@ -25,6 +26,15 @@ interface AdminHouseDetailsViewProps {
 }
 
 export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoading }: AdminHouseDetailsViewProps) {
+  // Prepare images for PhotoGallery component
+  const galleryImages = house.images?.map((img: any) => ({
+    imageId: img.imageId,
+    imageUrl: `/api/image/${img.imageId}`
+  })) || [];
+
+  const mainImage = galleryImages.length > 0 ? `/api/image/${house.images[0].imageId}` : '';
+  const thumbnailImages = galleryImages.slice(1, 5); // Show up to 4 thumbnails
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       {/* Header with back button and actions - more compact */}
@@ -82,52 +92,34 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left column - Images - smaller and more compact */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Main Image - reduced height */}
+          {/* Replace the existing image section with PhotoGallery */}
           {house.images && house.images.length > 0 ? (
-            <div className="space-y-3">
-              <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md">
-                <img
-                  src={`/api/image/${house.images[0].imageId}`}
-                  alt={house.title}
-                  className="w-full h-full object-cover"
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  Property Photos ({house.images.length})
+                </h3>
+                <PhotoGallery
+                  images={galleryImages}
+                  mainImage={mainImage}
+                  houseTitle={house.title}
+                  thumbnailImages={thumbnailImages}
                 />
-              </div>
-              
-              {/* Additional Images - smaller grid */}
-              {house.images.length > 1 && (
-                <div>
-                  <h3 className="text-base font-semibold mb-2">
-                    Additional Photos ({house.images.length - 1})
-                  </h3>
-                  <div className="grid grid-cols-6 gap-2">
-                    {house.images.slice(1, 7).map((image: any, index: number) => (
-                      <div key={index} className="aspect-square overflow-hidden rounded border">
-                        <img
-                          src={`/api/image/${image.imageId}`}
-                          alt={`${house.title} - Image ${index + 2}`}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {house.images.length > 7 && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      +{house.images.length - 7} more photos
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
           ) : (
             // Placeholder for missing images
-            <div className="space-y-3">
-              <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <div className="text-4xl mb-2">🏠</div>
-                  <div>No Image Available</div>
+            <Card>
+              <CardContent className="p-4">
+                <div className="aspect-[16/9] overflow-hidden rounded-lg border shadow-md bg-muted flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="text-4xl mb-2">🏠</div>
+                    <div>No Image Available</div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Description - more compact */}
@@ -278,4 +270,4 @@ export function AdminHouseDetailsView({ house, onBack, onHouseAction, actionLoad
     </div>
   );
 }
-            
+           
