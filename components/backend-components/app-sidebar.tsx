@@ -61,11 +61,6 @@ const data = {
       url: "/admin/users",
       icon: Users,
     },
-    {
-      title: "Settings",
-      url: "/admin/settings",
-      icon: Settings,
-    },
   ],
   navSecondary: [
     {
@@ -111,4 +106,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
+        
  

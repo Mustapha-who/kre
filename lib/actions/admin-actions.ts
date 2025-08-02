@@ -1,6 +1,10 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
 export async function verifyHouse(houseId: number, status: boolean) {
   try {
@@ -213,5 +217,54 @@ export async function getHouseImage(houseId: number) {
   } catch (error) {
     console.error(`Error fetching image for house ${houseId}:`, error);
     return null;
+  }
+}
+
+export async function getAdminData() {
+  try {
+    // Get admin token from cookies
+    const cookieStore = await cookies();
+    const adminToken = cookieStore.get('admin-token');
+    
+    if (!adminToken) {
+      throw new Error("No admin token found");
+    }
+
+    // Verify and decode the JWT token
+    let decodedToken: any;
+    try {
+      decodedToken = jwt.verify(adminToken.value, JWT_SECRET);
+    } catch {
+      throw new Error("Invalid admin token");
+    }
+
+    if (!decodedToken.adminId || decodedToken.role !== 'admin') {
+      throw new Error("Invalid admin session");
+    }
+    
+    const admin = await prisma.admin.findUnique({
+      where: { adminId: decodedToken.adminId },
+      select: {
+        adminId: true,
+        email: true,
+      }
+    });
+
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+
+    return {
+      userId: admin.adminId,
+      email: admin.email,
+      firstName: "Admin",
+      lastName: "User", 
+      name: "Admin User",
+      isHouseOwner: false,
+      isAdmin: true,
+    };
+  } catch (error) {
+    console.error("Failed to get admin data:", error);
+    throw new Error("Failed to get admin data");
   }
 }
