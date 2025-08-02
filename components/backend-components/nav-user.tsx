@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  Settings,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -30,6 +31,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SettingsButtonAdmin } from "@/components/settings-button-admin"
 
 export function NavUser({
   user,
@@ -116,6 +118,10 @@ export function NavUser({
                 <Bell />
                 Notifications
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings-admin")}>
+                <Settings />
+                Settings
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -128,3 +134,4 @@ export function NavUser({
     </SidebarMenu>
   )
 }
+
