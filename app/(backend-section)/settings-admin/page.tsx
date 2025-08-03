@@ -1,4 +1,4 @@
-import { SettingsUserInfo } from "@/components/settings-user-info";
+import { SettingsUserInfo } from "@/components/settings-admin-info";
 import { getAdminData } from "@/lib/actions/admin-actions";
 
 export default async function AdminSettingsPage() {

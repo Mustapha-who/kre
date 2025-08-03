@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,32 +7,63 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Mail, Key } from "lucide-react";
 
-interface UserData {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  isHouseOwner: boolean;
-  isAdmin?: boolean;
-  ownerId?: number;
-  userId?: number;
-}
+export function SettingsUserInfo() {
+  const [user, setUser] = useState<{ 
+    email: string; 
+    firstName?: string; 
+    lastName?: string; 
+    name?: string;
+    isHouseOwner: boolean;
+    ownerId?: number;
+    userId?: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export function SettingsUserInfo({ userData }: { userData: UserData }) {
-  const displayName = `${userData.firstName} ${userData.lastName}`;
-  const initials = `${userData.firstName?.charAt(0)}${userData.lastName?.charAt(0)}`.toUpperCase();
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUser();
+  }, []);
 
-  const getUserRole = () => {
-    if (userData.isAdmin) return 'Admin';
-    if (userData.isHouseOwner) return 'House Owner';
-    return 'Tenant';
-  };
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-muted rounded-full animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-5 bg-muted rounded w-32 animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
 
-  const getRoleVariant = () => {
-    if (userData.isAdmin) return 'destructive';
-    if (userData.isHouseOwner) return 'default';
-    return 'secondary';
-  };
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-muted-foreground">Unable to load user information</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const displayName = `${user.firstName} ${user.lastName}`;
+  const initials = `${user.firstName?.charAt(0)}${user.lastName?.charAt(0)}`.toUpperCase();
 
   return (
     <Card className="w-full max-w-2xl">
@@ -44,8 +76,8 @@ export function SettingsUserInfo({ userData }: { userData: UserData }) {
               <CardDescription>Your personal account details</CardDescription>
             </div>
           </div>
-          <Badge variant={getRoleVariant()} className="ml-auto">
-            {getUserRole()}
+          <Badge variant={user.isHouseOwner ? "default" : "secondary"} className="ml-auto">
+            {user.isHouseOwner ? 'House Owner' : 'Tenant'}
           </Badge>
         </div>
       </CardHeader>
@@ -62,7 +94,7 @@ export function SettingsUserInfo({ userData }: { userData: UserData }) {
             <h3 className="text-2xl font-semibold">{displayName}</h3>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <span>{userData.email}</span>
+              <span>{user.email}</span>
             </div>
           </div>
         </div>
@@ -80,7 +112,7 @@ export function SettingsUserInfo({ userData }: { userData: UserData }) {
               <label className="text-sm font-medium text-muted-foreground">Email Address</label>
               <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{userData.email}</span>
+                <span className="text-sm">{user.email}</span>
               </div>
             </div>
             
@@ -89,27 +121,17 @@ export function SettingsUserInfo({ userData }: { userData: UserData }) {
                 <label className="text-sm font-medium text-muted-foreground">First Name</label>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{userData.firstName}</span>
+                  <span className="text-sm">{user.firstName}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Last Name</label>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{userData.lastName}</span>
+                  <span className="text-sm">{user.lastName}</span>
                 </div>
               </div>
             </div>
-
-            {userData.isAdmin && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Role</label>
-                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-                  <User className="h-4 w-4 text-red-600" />
-                  <span className="text-sm font-medium text-red-600">System Administrator</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -138,5 +160,3 @@ export function SettingsUserInfo({ userData }: { userData: UserData }) {
     </Card>
   );
 }
-        
-              
