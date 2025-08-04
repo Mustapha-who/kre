@@ -1,69 +1,49 @@
 "use client";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Key } from "lucide-react";
+import { User, Mail, Key, Phone } from "lucide-react";
 
-export function SettingsUserInfo() {
-  const [user, setUser] = useState<{ 
-    email: string; 
-    firstName?: string; 
-    lastName?: string; 
-    name?: string;
-    isHouseOwner: boolean;
-    ownerId?: number;
-    userId?: number;
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UserData {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  phoneNumber?: string;
+  isHouseOwner: boolean;
+  isAdmin?: boolean;
+  ownerId?: number;
+  userId?: number;
+}
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user info:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchUser();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-muted rounded-full animate-pulse"></div>
-            <div className="space-y-2">
-              <div className="h-5 bg-muted rounded w-32 animate-pulse"></div>
-              <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-    );
+export function SettingsUserInfo({ userData }: { userData: UserData }) {
+  // Add null check and provide defaults
+  if (!userData) {
+    userData = {
+      email: "user@example.com",
+      firstName: "User",
+      lastName: "Name",
+      isHouseOwner: false,
+      isAdmin: false,
+    };
   }
 
-  if (!user) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-muted-foreground">Unable to load user information</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const displayName = `${userData.firstName || 'User'} ${userData.lastName || 'Name'}`;
+  const initials = `${userData.firstName?.charAt(0) || 'U'}${userData.lastName?.charAt(0) || 'N'}`.toUpperCase();
 
-  const displayName = `${user.firstName} ${user.lastName}`;
-  const initials = `${user.firstName?.charAt(0)}${user.lastName?.charAt(0)}`.toUpperCase();
+  const getUserRole = () => {
+    if (userData.isAdmin) return 'Admin';
+    if (userData.isHouseOwner) return 'House Owner';
+    return 'Tenant';
+  };
+
+  const getRoleVariant = () => {
+    if (userData.isAdmin) return 'destructive';
+    if (userData.isHouseOwner) return 'default';
+    return 'secondary';
+  };
 
   return (
     <Card className="w-full max-w-2xl">
@@ -76,8 +56,8 @@ export function SettingsUserInfo() {
               <CardDescription>Your personal account details</CardDescription>
             </div>
           </div>
-          <Badge variant={user.isHouseOwner ? "default" : "secondary"} className="ml-auto">
-            {user.isHouseOwner ? 'House Owner' : 'Tenant'}
+          <Badge variant={getRoleVariant()} className="ml-auto">
+            {getUserRole()}
           </Badge>
         </div>
       </CardHeader>
@@ -94,7 +74,7 @@ export function SettingsUserInfo() {
             <h3 className="text-2xl font-semibold">{displayName}</h3>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Mail className="h-4 w-4" />
-              <span>{user.email}</span>
+              <span>{userData.email}</span>
             </div>
           </div>
         </div>
@@ -112,7 +92,7 @@ export function SettingsUserInfo() {
               <label className="text-sm font-medium text-muted-foreground">Email Address</label>
               <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{user.email}</span>
+                <span className="text-sm">{userData.email}</span>
               </div>
             </div>
             
@@ -121,17 +101,37 @@ export function SettingsUserInfo() {
                 <label className="text-sm font-medium text-muted-foreground">First Name</label>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{user.firstName}</span>
+                  <span className="text-sm">{userData.firstName || 'User'}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Last Name</label>
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{user.lastName}</span>
+                  <span className="text-sm">{userData.lastName || 'Name'}</span>
                 </div>
               </div>
             </div>
+
+            {userData.isHouseOwner && userData.phoneNumber && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{userData.phoneNumber}</span>
+                </div>
+              </div>
+            )}
+
+            {userData.isAdmin && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Role</label>
+                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                  <User className="h-4 w-4 text-red-600" />
+                  <span className="text-sm font-medium text-red-600">System Administrator</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
