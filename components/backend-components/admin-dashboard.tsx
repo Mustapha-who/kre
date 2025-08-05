@@ -397,24 +397,33 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
       </div>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmationDialog.isOpen} onOpenChange={cancelVerification}>
+      <Dialog open={confirmationDialog.isOpen} onOpenChange={(open) => {
+        if (!open) {
+          cancelVerification();
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {confirmationDialog.action === 'approve' ? (
+              {confirmationDialog.isOpen && confirmationDialog.action === 'approve' ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
+              ) : confirmationDialog.isOpen && confirmationDialog.action === 'reject' ? (
                 <X className="h-5 w-5 text-red-500" />
-              )}
-              {confirmationDialog.action === 'approve' ? 'Approve House' : 'Reject House'}
+              ) : null}
+              {confirmationDialog.isOpen && confirmationDialog.action === 'approve' ? 'Approve House' : 
+               confirmationDialog.isOpen && confirmationDialog.action === 'reject' ? 'Reject House' : ''}
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to {confirmationDialog.action} 
-              <span className="font-semibold"> "{confirmationDialog.houseTitle}"</span>?
-              {confirmationDialog.action === 'approve' 
-                ? ' This will make it visible to all users on the platform.'
-                : ' This will prevent it from being displayed to users.'
-              }
+              {confirmationDialog.isOpen && (
+                <>
+                  Are you sure you want to {confirmationDialog.action} 
+                  <span className="font-semibold"> "{confirmationDialog.houseTitle}"</span>?
+                  {confirmationDialog.action === 'approve' 
+                    ? ' This will make it visible to all users on the platform.'
+                    : ' This will prevent it from being displayed to users.'
+                  }
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -429,12 +438,13 @@ export function AdminDashboard({ houses: initialHouses }: AdminDashboardProps) {
             >
               {isPending ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-              ) : confirmationDialog.action === 'approve' ? (
+              ) : confirmationDialog.isOpen && confirmationDialog.action === 'approve' ? (
                 <CheckCircle className="w-4 h-4" />
-              ) : (
+              ) : confirmationDialog.isOpen && confirmationDialog.action === 'reject' ? (
                 <X className="w-4 h-4" />
-              )}
-              {confirmationDialog.action === 'approve' ? 'Approve' : 'Reject'}
+              ) : null}
+              {confirmationDialog.isOpen && confirmationDialog.action === 'approve' ? 'Approve' : 
+               confirmationDialog.isOpen && confirmationDialog.action === 'reject' ? 'Reject' : ''}
             </Button>
           </DialogFooter>
         </DialogContent>
