@@ -95,18 +95,34 @@ export default async function MainPage({
                 <div className="border-l-4 border-primary pl-4">
                   <Link 
                     href={`/main/location?country=${encodeURIComponent(country)}&city=${encodeURIComponent(city)}`}
-                    className="hover:text-primary transition-colors group"
+                    className="hover:text-primary transition-colors group block"
                   >
-                    <h2 className="text-xl font-semibold text-foreground group-hover:text-primary cursor-pointer">
-                      {location}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <h2 className="text-xl font-semibold text-foreground group-hover:text-primary cursor-pointer flex items-center gap-2">
+                            {location}
+                            {hasMore && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                                +{locationHouses.length - PREVIEW_LIMIT}
+                              </span>
+                            )}
+                          </h2>
+                          <p className="text-sm text-muted-foreground group-hover:text-primary/70 transition-colors">
+                            {locationHouses.length} properties available
+                          </p>
+                        </div>
+                      </div>
                       {hasMore && (
-                        <span className="text-sm text-muted-foreground ml-2 group-hover:text-primary/70">
-                          (+{locationHouses.length - PREVIEW_LIMIT} more)
-                        </span>
+                        <div className="flex items-center text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                          <span className="mr-1 hidden sm:inline">View all</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
                       )}
-                    </h2>
+                    </div>
                   </Link>
-                  <p className="text-sm text-muted-foreground">{locationHouses.length} properties</p>
                 </div>
                 
                 {/* Houses Grid for this location - limited preview */}
